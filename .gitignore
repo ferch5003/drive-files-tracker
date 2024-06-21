@@ -1,0 +1,13 @@
+# IDEs
+.idea
+
+golang-telegram-bot.iml
+
+# Environments
+telegram-bot-service/.env
+
+# Temporary files
+tmp
+
+# Binaries
+telegramApp

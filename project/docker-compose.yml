@@ -1,0 +1,15 @@
+version: '3'
+
+volumes:
+  pgdata:
+
+services:
+  telegram-bot-service:
+    build:
+      context: ./../telegram-bot-service
+      dockerfile: ../telegram-bot-service/telegram-bot-service.dockerfile
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    user: '${UID}:${GID}'
