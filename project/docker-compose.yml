@@ -4,6 +4,18 @@ volumes:
   pgdata:
 
 services:
+  broker-td:
+    build:
+      context: ./../broker-td
+      dockerfile: ./../broker-td/broker-td.dockerfile
+    restart: always
+    ports:
+      - "8080:3000"
+    deploy:
+      mode: replicated
+      replicas: 1
+    user: '${UID}:${GID}'
+
   telegram-bot-service:
     build:
       context: ./../telegram-bot-service

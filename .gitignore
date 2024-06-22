@@ -4,10 +4,11 @@
 golang-telegram-bot.iml
 
 # Environments
-telegram-bot-service/.env
+*/.env
 
 # Temporary files
 tmp
 
 # Binaries
+brokerTDApp
 telegramApp
