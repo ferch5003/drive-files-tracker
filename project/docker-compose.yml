@@ -25,3 +25,36 @@ services:
       mode: replicated
       replicas: 1
     user: '${UID}:${GID}'
+
+  postgres-tbs:
+    image: "postgres:latest"
+    ports:
+      - "5432:5432"
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: users_tbs
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pgdata:/var/lib/postgresql/data/
+    user: '${UID}:${GID}'
+    healthcheck:
+      test: pg_isready -U postgres -d users_tbs
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  migrate:
+    image: migrate/migrate
+    volumes:
+      - ./../telegram-bot-service/migrations:/migrations
+    user: '${UID}:${GID}'
+    command: [ "-path", "/migrations/", "-database",  "postgres://postgres:password@postgres-tbs:5432/users_tbs?sslmode=disable", "up", "3" ]
+    links:
+      - postgres-tbs
+    depends_on:
+      - postgres-tbs
