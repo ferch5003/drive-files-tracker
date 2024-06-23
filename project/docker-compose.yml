@@ -51,7 +51,7 @@ services:
   migrate:
     image: migrate/migrate
     volumes:
-      - ./../telegram-bot-service/migrations:/migrations
+      - ./../user-service/migrations:/migrations
     user: '${UID}:${GID}'
     command: [ "-path", "/migrations/", "-database",  "postgres://postgres:password@postgres-tbs:5432/users_tbs?sslmode=disable", "up", "3" ]
     links:
