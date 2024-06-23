@@ -7,7 +7,11 @@ import (
 )
 
 type EnvVars struct {
+	// Server Environment.
 	Port string
+
+	// Database Environment.
+	PostgreDSN string
 }
 
 func NewConfigurations() (*EnvVars, error) {
@@ -29,8 +33,11 @@ func NewConfigurations() (*EnvVars, error) {
 		port = "8080"
 	}
 
+	postgreDSN := os.Getenv("POSTGRE_DSN")
+
 	environment := &EnvVars{
-		Port: port,
+		Port:       port,
+		PostgreDSN: postgreDSN,
 	}
 
 	return environment, nil
