@@ -14,6 +14,8 @@ services:
     deploy:
       mode: replicated
       replicas: 1
+    environment:
+      PORT: 80
     user: '${UID}:${GID}'
 
   telegram-bot-service:
@@ -24,6 +26,21 @@ services:
     deploy:
       mode: replicated
       replicas: 1
+    user: '${UID}:${GID}'
+
+  user-service:
+    build:
+      context: ./../user-service
+      dockerfile: ./../user-service/user-service.dockerfile
+    restart: always
+    ports:
+      - "3001:80"
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      POSTGRE_DSN: "host=postgres-tbs port=5432 user=postgres password=password dbname=users_tbs sslmode=disable timezone=UTC connect_timeout=3"
+      PORT: 80
     user: '${UID}:${GID}'
 
   postgres-tbs:

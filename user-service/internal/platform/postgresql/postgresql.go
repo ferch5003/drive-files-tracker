@@ -9,7 +9,7 @@ import (
 )
 
 func NewConnection(config *config.EnvVars) (*sqlx.DB, error) {
-	db := sqlx.MustConnect("mysql", config.PostgreDSN)
+	db := sqlx.MustConnect("pgx", config.PostgreDSN)
 
 	if err := db.Ping(); err != nil {
 		return nil, err

@@ -12,3 +12,8 @@ tmp
 # Binaries
 brokerTDApp
 telegramApp
+userServiceApp
+
+# SQL Scripts
+000002_insert_default_users.down.sql
+000002_insert_default_users.up.sql

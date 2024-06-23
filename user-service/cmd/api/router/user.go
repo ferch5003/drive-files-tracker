@@ -5,9 +5,14 @@ import (
 	"go.uber.org/fx"
 	"user-service/cmd/api/handler"
 	"user-service/config"
+	"user-service/internal/user"
 )
 
 var NewUserModule = fx.Module("user",
+	// Register Repository & Service
+	fx.Provide(user.NewRepository),
+	fx.Provide(user.NewService),
+
 	// Register Handler
 	fx.Provide(handler.NewUserHandler),
 
@@ -39,5 +44,5 @@ func NewUserRouter(app *fiber.App,
 func (u userRouter) Register() {
 	u.App.Route("/users", func(api fiber.Router) {
 		api.Get("/", u.Handler.GetAll).Name("get_all")
-	}, "gdrive-family-uploader.")
+	}, "users.")
 }

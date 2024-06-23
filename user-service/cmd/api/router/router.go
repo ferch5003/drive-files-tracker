@@ -1,8 +1,8 @@
 package router
 
 import (
-	"broker-td/config"
 	"github.com/gofiber/fiber/v2"
+	"user-service/config"
 )
 
 type Router interface {

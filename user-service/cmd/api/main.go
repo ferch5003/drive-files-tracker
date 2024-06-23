@@ -8,6 +8,7 @@ import (
 	"user-service/cmd/api/bootstrap"
 	"user-service/cmd/api/router"
 	"user-service/config"
+	"user-service/internal/platform/postgresql"
 )
 
 func main() {
@@ -42,6 +43,9 @@ func main() {
 		fx.Provide(bootstrap.NewFiberServer),
 		// creates: context.Context
 		fx.Supply(ctx),
+
+		// creates: *sqlx.DB
+		fx.Provide(postgresql.NewConnection),
 
 		// Provide modules
 		router.NewUserModule,

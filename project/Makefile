@@ -1,5 +1,6 @@
 BROKER_BINARY=brokerTDApp
 TELEGRAM_BINARY=telegramApp
+USER_BINARY=userServiceApp
 
 ## up: starts all containers in the background without forcing build
 up:
@@ -8,7 +9,7 @@ up:
 	@echo "Docker images started!"
 
 ## up_build: stops docker-compose (if running), builds all projects and starts docker compose
-up_build: build_broker build_telegram
+up_build: build_broker build_user build_telegram
 	@echo "Stopping docker images (if running...)"
 	docker-compose down --remove-orphans
 	@echo "Building (when required) and starting docker images..."
@@ -31,4 +32,10 @@ build_broker:
 build_telegram:
 	@echo "Building Telegram Bots binary..."
 	cd ../telegram-bot-service && env GOOS=linux CGO_ENABLED=0 go build -o ${TELEGRAM_BINARY} ./cmd/bot
+	@echo "Done!"
+
+## build_broker: builds the broker binary as a linux executable
+build_user:
+	@echo "Building User Service binary..."
+	cd ../user-service && env GOOS=linux CGO_ENABLED=0 go build -o ${USER_BINARY} ./cmd/api
 	@echo "Done!"

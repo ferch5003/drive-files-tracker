@@ -1,8 +1,6 @@
 package bootstrap
 
 import (
-	"broker-td/cmd/api/router"
-	"broker-td/config"
 	"context"
 	"fmt"
 	"github.com/bytedance/sonic"
@@ -11,6 +9,8 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+	"user-service/cmd/api/router"
+	"user-service/config"
 )
 
 const (
