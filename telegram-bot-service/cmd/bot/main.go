@@ -6,6 +6,7 @@ import (
 	"telegram-bot-service/cmd/bot/bootstrap"
 	"telegram-bot-service/cmd/bot/handlers"
 	"telegram-bot-service/config"
+	"telegram-bot-service/internal/platform/client"
 )
 
 func main() {
@@ -19,11 +20,16 @@ func main() {
 		logger.Fatal(err.Error())
 	}
 
+	usersClient := client.NewUserServiceClient("http://broker-td")
+
 	app := fx.New(
 		// creates: config.EnvVars
 		fx.Supply(configurations),
 		// creates: *zap.Logger
 		fx.Supply(logger),
+
+		// creates: *client.UserServiceClient
+		fx.Supply(usersClient),
 
 		// creates: *bootstrap.TelegramBotGroup
 		fx.Provide(bootstrap.NewTelegramBotGroup),

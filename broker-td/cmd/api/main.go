@@ -45,6 +45,7 @@ func main() {
 
 		// Provide modules
 		router.NewGDriveFamilyUploaderModule,
+		router.NewUserModule,
 
 		// Start web server.
 		fx.Invoke(bootstrap.Start),

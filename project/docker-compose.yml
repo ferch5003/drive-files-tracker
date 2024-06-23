@@ -26,6 +26,8 @@ services:
     deploy:
       mode: replicated
       replicas: 1
+    depends_on:
+      - user-service
     user: '${UID}:${GID}'
 
   user-service:
@@ -41,6 +43,8 @@ services:
     environment:
       POSTGRE_DSN: "host=postgres-tbs port=5432 user=postgres password=password dbname=users_tbs sslmode=disable timezone=UTC connect_timeout=3"
       PORT: 80
+    depends_on:
+      - postgres-tbs
     user: '${UID}:${GID}'
 
   postgres-tbs:
