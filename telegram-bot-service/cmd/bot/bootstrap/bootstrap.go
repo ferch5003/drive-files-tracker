@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/telebot.v3"
 	"telegram-bot-service/cmd/bot/handlers"
+	"telegram-bot-service/cmd/bot/middleware"
 )
 
 type TelegramBotGroup struct {
@@ -27,6 +28,7 @@ func Start(
 
 			go func() {
 				logger.Info(fmt.Sprintf("gdBotHandler..."))
+				gdBotHandler.TelegramBot.Use(middleware.Authorize(logger))
 				gdBotHandler.TelegramBot.Handle(telebot.OnPhoto, gdBotHandler.UploadImage)
 				gdBotHandler.TelegramBot.Start()
 			}()
