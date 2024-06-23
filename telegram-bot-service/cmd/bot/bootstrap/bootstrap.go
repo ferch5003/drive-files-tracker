@@ -27,7 +27,7 @@ func Start(
 
 			go func() {
 				logger.Info(fmt.Sprintf("gdBotHandler..."))
-				gdBotHandler.TelegramBot.Handle(telebot.OnPhoto, gdBotHandler.GetPhoto)
+				gdBotHandler.TelegramBot.Handle(telebot.OnPhoto, gdBotHandler.UploadImage)
 				gdBotHandler.TelegramBot.Start()
 			}()
 

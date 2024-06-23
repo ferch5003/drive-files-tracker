@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -12,12 +13,15 @@ func NewGDriveFamilyHandler() *GDriveFamilyHandler {
 }
 
 func (h *GDriveFamilyHandler) Post(c *fiber.Ctx) error {
-	var data any
-	if err := c.BodyParser(&data); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+	if form, err := c.MultipartForm(); err == nil {
+		// Get all files from "documents" key:
+		image := form.File["tg-bot-file"][0]
+		username := form.Value["username"][0]
+
+		fmt.Println(image.Filename, image.Size, username)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(data)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data": "any",
+	})
 }

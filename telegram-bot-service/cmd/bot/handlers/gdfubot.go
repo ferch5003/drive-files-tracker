@@ -1,16 +1,27 @@
 package handlers
 
 import (
+	"bytes"
 	"fmt"
 	"gopkg.in/telebot.v3"
-	"os"
+	"io"
+	"log"
+	"mime/multipart"
+	"net/http"
+	"path/filepath"
 	"telegram-bot-service/config"
-	"telegram-bot-service/internal/platform/files"
 	"time"
 )
 
 const (
-	RFC3339OnlyDateFormat = "2006-01-02"
+	_RFC3339OnlyDateFormat = "2006-01-02"
+)
+
+const (
+	_errReadingImage      = "Hubo un error leyendo la imagen..."
+	_errProcessingMessage = "Hubo un error procesando la imagen..."
+	_errIdentifyingUser   = "Hubo un error identificando al usuario..."
+	_errConnectingService = "Hubo un error conectandose al servicio..."
 )
 
 type GDFamilyUnityBot struct {
@@ -33,37 +44,76 @@ func NewGDFamilyUnityBot(configs *config.EnvVars) (*GDFamilyUnityBot, error) {
 	}, nil
 }
 
-func (g *GDFamilyUnityBot) GetPhoto(c telebot.Context) error {
+func (g *GDFamilyUnityBot) UploadImage(c telebot.Context) error {
 	// Get the photo information
 	photo := c.Message().Photo
 
-	tmpDir, err := files.GetDir("tmp")
-	if err != nil {
-		return fmt.Errorf("error downloading photo: %w", err)
-	}
-
-	// Check If username directory exist, if not, created.
-	username := c.Message().Sender.Username
-	userDir, err := files.GetDir(fmt.Sprintf("%s/%s", tmpDir, username))
-	if os.IsNotExist(err) {
-		userDir, err = files.CreateDir(tmpDir, username)
-		if err != nil {
-			return fmt.Errorf("error downloading photo: %w", err)
-		}
-	}
-
 	// Generate a unique filename
 	messageTime := c.Message().Time()
-	filename := fmt.Sprintf("%s_%d.jpg", messageTime.Format(RFC3339OnlyDateFormat), c.Message().ID)
+	filename := fmt.Sprintf("%s_%d.jpg", messageTime.Format(_RFC3339OnlyDateFormat), c.Message().ID)
 
-	// Generate filepath to download.
-	filepath := fmt.Sprintf("%s/%s", userDir, filename)
-
-	// Download the photo using File and local filename
-	err = g.TelegramBot.Download(photo.MediaFile(), filepath)
+	// Open the file.
+	file, err := g.TelegramBot.File(photo.MediaFile())
 	if err != nil {
-		return fmt.Errorf("error downloading photo: %w", err)
+		log.Println("err: ", err)
+		return c.Send(_errReadingImage)
 	}
+
+	// Create a new multipart writer.
+	var buffer bytes.Buffer
+	writer := multipart.NewWriter(&buffer)
+
+	// Create a multipart form file.
+	formFile, err := writer.CreateFormFile("tg-bot-file", filepath.Base(filename))
+	if err != nil {
+		log.Println("err: ", err)
+		return c.Send(_errProcessingMessage)
+	}
+
+	// Copy the file content to the form file.
+	_, err = io.Copy(formFile, file)
+	if err != nil {
+		log.Println("err: ", err)
+		return c.Send(_errProcessingMessage)
+	}
+
+	// Send username in order to identify the sender.
+	err = writer.WriteField("username", c.Message().Sender.Username)
+	if err != nil {
+		log.Println("err: ", err)
+		return c.Send(_errIdentifyingUser)
+	}
+
+	if err = writer.Close(); err != nil {
+		log.Println("err: ", err)
+		return c.Send(_errProcessingMessage)
+	}
+
+	// Making the request to outsource service to process.
+	req, err := http.NewRequest(
+		http.MethodPost,
+		"http://broker-td/gdrive-family-uploader",
+		bytes.NewReader(buffer.Bytes()))
+	if err != nil {
+		log.Println("err: ", err)
+		return c.Send(_errConnectingService)
+	}
+
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	// Using a client to obtain the response of the service.
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println("err: ", err)
+		return c.Send(_errProcessingMessage)
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Println("err: ", err)
+		}
+	}(resp.Body)
 
 	return c.Send(fmt.Sprintf("¡Imagen guardada! Nombre guardado de la imagen: **%s**", filename))
 }
