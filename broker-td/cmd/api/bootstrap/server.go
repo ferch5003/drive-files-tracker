@@ -8,6 +8,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/gofiber/contrib/fiberzap/v2"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -32,7 +33,6 @@ func Start(
 	app *fiber.App,
 	router *router.GeneralRouter,
 	logger *zap.Logger) {
-
 	port := _defaultPort // Default Port
 	if cfg != nil && cfg.Port != "" {
 		port = cfg.Port
@@ -41,6 +41,12 @@ func Start(
 	// Log all requests.
 	app.Use(fiberzap.New(fiberzap.Config{
 		Logger: logger,
+	}))
+
+	// Allow only internal services.
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "http://telegram-bot-service, https://user-service",
+		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
 
 	app.Use(recover.New())
