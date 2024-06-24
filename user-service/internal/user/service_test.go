@@ -18,6 +18,11 @@ func (mr *mockRepository) GetAll(ctx context.Context) ([]domain.User, error) {
 	return args.Get(0).([]domain.User), args.Error(1)
 }
 
+func (mr *mockRepository) FindFolderID(ctx context.Context, userID, botID int, date string) (string, error) {
+	args := mr.Called(ctx, userID, botID, date)
+	return args.Get(0).(string), args.Error(1)
+}
+
 func TestServiceGetAll_Successful(t *testing.T) {
 	// Given
 	expectedUsers := []domain.User{

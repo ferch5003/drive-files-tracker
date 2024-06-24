@@ -91,3 +91,80 @@ func TestRepositoryGetAll_FailsDueToInvalidSelect(t *testing.T) {
 	require.ErrorContains(t, err, "could not match actual sql")
 	require.ErrorContains(t, err, "with expected regexp")
 }
+
+func TestRepositoryFindFolderID_Successful(t *testing.T) {
+	// Given
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+
+	defer db.Close()
+
+	dbx := sqlx.NewDb(db, "sqlmock")
+
+	ctx := context.Background()
+
+	expectedFolderID := "Test"
+
+	user := domain.User{
+		ID:       1,
+		Username: "Test User",
+	}
+
+	bot := domain.Bot{
+		ID:   1,
+		Name: "Test Bot",
+	}
+
+	columns := []string{"folder_id"}
+	rows := sqlmock.NewRows(columns)
+	rows.AddRow(expectedFolderID)
+	mock.ExpectQuery("SELECT .*").WillReturnRows(rows)
+
+	repository := NewRepository(dbx)
+
+	// When
+	folderID, err := repository.FindFolderID(ctx, user.ID, bot.ID, "")
+
+	// Then
+	require.NoError(t, err)
+	require.NotNil(t, bot)
+	require.Equal(t, expectedFolderID, folderID)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestRepositoryFindFolderID_FailsDueToInvalidGet(t *testing.T) {
+	// Given
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+
+	defer db.Close()
+
+	dbx := sqlx.NewDb(db, "sqlmock")
+
+	ctx := context.Background()
+
+	wrongQuery := regexp.QuoteMeta("SELECT wrong FROM bot_user;")
+	expectedError := errors.New(`Query: could not match actual sql: \"SELECT folder_id
+									    FROM bot_user
+									    INNER JOIN bots
+										ON bot_user.bot_id = ?
+										INNER JOIN users
+ 										ON bot_user.user_id = ?
+						 				WHERE bot_user.date = ?;\" with expected regexp \"SELECT 
+										wrong FROM bot_user;\"`)
+
+	expectedFolderID := ""
+
+	mock.ExpectQuery(wrongQuery).WillReturnError(expectedError)
+
+	repository := NewRepository(dbx)
+
+	// When
+	folderID, err := repository.FindFolderID(ctx, 0, 0, "")
+
+	// Then
+	require.Equal(t, expectedFolderID, folderID)
+	require.ErrorContains(t, err, "Query")
+	require.ErrorContains(t, err, "could not match actual sql")
+	require.ErrorContains(t, err, "with expected regexp")
+}
