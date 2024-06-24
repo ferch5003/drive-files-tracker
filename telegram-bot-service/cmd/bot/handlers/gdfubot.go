@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"gopkg.in/telebot.v3"
 	"io"
@@ -22,6 +23,7 @@ const (
 	_errProcessingMessage = "Hubo un error procesando la imagen..."
 	_errIdentifyingUser   = "Hubo un error identificando al usuario..."
 	_errConnectingService = "Hubo un error conectandose al servicio..."
+	_errProcessingService = "Hubo un error procesando los datos del servicio..."
 )
 
 type GDFamilyUnityBot struct {
@@ -84,6 +86,13 @@ func (g *GDFamilyUnityBot) UploadImage(c telebot.Context) error {
 		return c.Send(_errIdentifyingUser)
 	}
 
+	// Send date in order to identify the folder.
+	err = writer.WriteField("date", messageTime.Format(_RFC3339OnlyDateFormat))
+	if err != nil {
+		log.Println("err: ", err)
+		return c.Send(_errIdentifyingUser)
+	}
+
 	if err = writer.Close(); err != nil {
 		log.Println("err: ", err)
 		return c.Send(_errProcessingMessage)
@@ -114,6 +123,26 @@ func (g *GDFamilyUnityBot) UploadImage(c telebot.Context) error {
 			log.Println("err: ", err)
 		}
 	}(resp.Body)
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("err: ", err)
+		return c.Send(_errProcessingService)
+	}
+
+	var data map[string]any
+	if err := json.Unmarshal(body, &data); err != nil {
+		log.Println("err: ", err)
+		return c.Send(_errProcessingService)
+	}
+
+	dataErr, ok := data["error"]
+	if ok {
+		log.Println("err: ", dataErr)
+		return c.Send(
+			"La imagen no puede ser procesada debido a un error del servicio, por favor contactarse con el dev...",
+		)
+	}
 
 	return c.Send(fmt.Sprintf("¡Imagen guardada! Nombre guardado de la imagen: **%s**", filename))
 }

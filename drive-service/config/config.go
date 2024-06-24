@@ -1,0 +1,56 @@
+package config
+
+import (
+	"drive-service/internal/platform/files"
+	"github.com/joho/godotenv"
+	"os"
+)
+
+type EnvVars struct {
+	// Server Environment.
+	Port string
+
+	SAPrivateKeyID      string
+	SAPrivateKey        string
+	SAClientEmail       string
+	SAClientID          string
+	SAClientX509CertURL string
+}
+
+func NewConfigurations() (*EnvVars, error) {
+	area := os.Getenv("AREA")
+
+	if area == "" {
+		envFilepath, err := files.GetFile(".env")
+		if err != nil {
+			return nil, err
+		}
+
+		if err := godotenv.Load(envFilepath); err != nil {
+			return nil, err
+		}
+	}
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	saPrivateKeyID := os.Getenv("SA_PRIVATE_KEY_ID")
+	saPrivateKey := os.Getenv("SA_PRIVATE_KEY")
+	saClientEmail := os.Getenv("SA_CLIENT_EMAIL")
+	saClientID := os.Getenv("SA_CLIENT_ID")
+	saClientX509CertURL := os.Getenv("SA_CLIENT_X509_CERT_URL")
+
+	environment := &EnvVars{
+		Port: port,
+
+		SAPrivateKeyID:      saPrivateKeyID,
+		SAPrivateKey:        saPrivateKey,
+		SAClientEmail:       saClientEmail,
+		SAClientID:          saClientID,
+		SAClientX509CertURL: saClientX509CertURL,
+	}
+
+	return environment, nil
+}

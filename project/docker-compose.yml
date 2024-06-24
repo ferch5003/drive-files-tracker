@@ -47,6 +47,20 @@ services:
       - postgres-tbs
     user: '${UID}:${GID}'
 
+  drive-service:
+    build:
+      context: ./../drive-service
+      dockerfile: ./../drive-service/drive-service.dockerfile
+    restart: always
+    ports:
+      - "5001:5001"
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      PORT: 5001
+    user: '${UID}:${GID}'
+
   postgres-tbs:
     image: "postgres:latest"
     ports:

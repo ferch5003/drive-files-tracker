@@ -17,7 +17,7 @@ func (h *UserHandler) GetAll(c *fiber.Ctx) error {
 	statusCode, body, errs := agent.Bytes()
 	if len(errs) > 0 {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"Error": errs,
+			"error": errs,
 		})
 	}
 
@@ -25,7 +25,7 @@ func (h *UserHandler) GetAll(c *fiber.Ctx) error {
 	err := json.Unmarshal(body, &users)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"Error": err,
+			"error": err,
 		})
 	}
 

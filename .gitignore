@@ -13,6 +13,7 @@ tmp
 brokerTDApp
 telegramApp
 userServiceApp
+driveServiceApp
 
 # SQL Scripts
 000002_insert_default_users.down.sql
