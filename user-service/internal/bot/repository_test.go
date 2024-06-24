@@ -1,4 +1,4 @@
-package user
+package bot
 
 import (
 	"context"
@@ -58,7 +58,7 @@ func TestRepositoryGet_FailsDueToInvalidGet(t *testing.T) {
 
 	wrongQuery := regexp.QuoteMeta("SELECT wrong FROM bots;")
 	expectedError := errors.New(`Query: could not match actual sql: \"SELECT id, name 
-										FROM users WHERE name = ?;\" with expected regexp \"SELECT 
+										FROM bots WHERE name = ?;\" with expected regexp \"SELECT 
 										wrong FROM bots;\"`)
 
 	expectedBot := domain.Bot{}

@@ -92,6 +92,72 @@ func TestRepositoryGetAll_FailsDueToInvalidSelect(t *testing.T) {
 	require.ErrorContains(t, err, "with expected regexp")
 }
 
+func TestRepositoryGet_Successful(t *testing.T) {
+	// Given
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+
+	defer db.Close()
+
+	dbx := sqlx.NewDb(db, "sqlmock")
+
+	ctx := context.Background()
+
+	expectedUserUsername := "Test"
+	expectedUser := domain.User{
+		ID:       1,
+		Username: "Test",
+	}
+
+	columns := []string{"id", "username"}
+	rows := sqlmock.NewRows(columns)
+	rows.AddRow(expectedUser.ID, expectedUser.Username)
+	mock.ExpectQuery("SELECT .*").WillReturnRows(rows)
+
+	repository := NewRepository(dbx)
+
+	// When
+	user, err := repository.Get(ctx, expectedUserUsername)
+
+	// Then
+	require.NoError(t, err)
+	require.NotNil(t, user)
+	require.Equal(t, expectedUser, user)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestRepositoryGet_FailsDueToInvalidGet(t *testing.T) {
+	// Given
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+
+	defer db.Close()
+
+	dbx := sqlx.NewDb(db, "sqlmock")
+
+	ctx := context.Background()
+
+	wrongQuery := regexp.QuoteMeta("SELECT wrong FROM bots;")
+	expectedError := errors.New(`Query: could not match actual sql: \"SELECT id, username 
+										FROM users WHERE username = ?;\" with expected regexp \"SELECT 
+										wrong FROM users;\"`)
+
+	expectedUser := domain.User{}
+
+	mock.ExpectQuery(wrongQuery).WillReturnError(expectedError)
+
+	repository := NewRepository(dbx)
+
+	// When
+	user, err := repository.Get(ctx, "")
+
+	// Then
+	require.Equal(t, expectedUser, user)
+	require.ErrorContains(t, err, "Query")
+	require.ErrorContains(t, err, "could not match actual sql")
+	require.ErrorContains(t, err, "with expected regexp")
+}
+
 func TestRepositoryFindFolderID_Successful(t *testing.T) {
 	// Given
 	db, mock, err := sqlmock.New()

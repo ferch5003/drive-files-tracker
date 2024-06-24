@@ -8,8 +8,9 @@ import (
 
 // Queries.
 const (
-	_getAllUsersStmt  = `SELECT id, username FROM users;`
-	_findFolderIDStmt = `SELECT folder_id
+	_getAllUsersStmt       = `SELECT id, username FROM users;`
+	_getUserByUsernameStmt = `SELECT id, username FROM users WHERE username = ?;`
+	_findFolderIDStmt      = `SELECT folder_id
 						 FROM bot_user
 						 INNER JOIN bots
 						 ON bot_user.bot_id = ?
@@ -21,6 +22,9 @@ const (
 type Repository interface {
 	// GetAll obtain all users from the database.
 	GetAll(ctx context.Context) ([]domain.User, error)
+
+	// Get obtain one User by the username.
+	Get(ctx context.Context, username string) (domain.User, error)
 
 	// FindFolderID obtain the folder ID associated with a user and a bot.
 	FindFolderID(ctx context.Context, userID, botID int, date string) (string, error)
@@ -42,6 +46,16 @@ func (r *repository) GetAll(ctx context.Context) ([]domain.User, error) {
 	}
 
 	return users, nil
+}
+
+func (r *repository) Get(ctx context.Context, username string) (domain.User, error) {
+	var user domain.User
+
+	if err := r.conn.GetContext(ctx, &user, _getUserByUsernameStmt, username); err != nil {
+		return domain.User{}, err
+	}
+
+	return user, nil
 }
 
 func (r *repository) FindFolderID(ctx context.Context, userID, botID int, date string) (string, error) {
