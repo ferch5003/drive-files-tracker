@@ -1,9 +1,13 @@
 package client
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
 )
 
@@ -61,4 +65,47 @@ func (c *UserServiceClient) GetUsernames() ([]string, error) {
 	}
 
 	return usernames, nil
+}
+
+func (c *UserServiceClient) PostPhoto(buffer bytes.Buffer, writer *multipart.Writer) error {
+	req, err := http.NewRequest(
+		http.MethodPost,
+		c.baseURL+"/gdrive-family-uploader",
+		bytes.NewReader(buffer.Bytes()))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	// Using a client to obtain the response of the service.
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Println("err: ", err)
+		}
+	}(resp.Body)
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("err: ", err)
+		return err
+	}
+
+	var data map[string]any
+	if err := json.Unmarshal(body, &data); err != nil {
+		return err
+	}
+
+	dataErr, ok := data["error"]
+	if ok {
+		return errors.New(fmt.Sprintf("%s", dataErr))
+	}
+
+	return nil
 }

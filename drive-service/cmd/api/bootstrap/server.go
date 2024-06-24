@@ -24,6 +24,7 @@ func NewServer(ctx context.Context, serviceAccount driveaccount.ServiceAccount) 
 	}
 
 	driveService, err := drive.NewService(ctx, option.WithHTTPClient(client))
+
 	if err != nil {
 		return nil, err
 	}
@@ -43,13 +44,14 @@ func Start(
 	if cfg != nil && cfg.Port != "" {
 		port = cfg.Port
 	}
+
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			logger.Info(fmt.Sprintf("Starting RPC Server on 0.0.0.0:%s", port))
 
 			go func() {
 				// Register the RPC Server
-				if err := ntrpc.Register(new(rpc.Server)); err != nil {
+				if err := ntrpc.Register(rpcServer); err != nil {
 					logger.Error(err.Error())
 					return
 				}

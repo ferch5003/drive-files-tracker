@@ -77,3 +77,22 @@ func CreateDir(path, directory string) (string, error) {
 
 	return newDir, nil
 }
+
+// CreateFile creates a new file to the indicated path.
+func CreateFile(path, filename string, data []byte) (string, error) {
+	dir, err := GetDir(path)
+	if os.IsNotExist(err) {
+		dir, err = CreateDir(path, "")
+		if err != nil {
+			return "", err
+		}
+	}
+
+	filePath := fmt.Sprintf("%s/%s", dir, filename)
+	err = os.WriteFile(filePath, data, os.ModePerm)
+	if err != nil {
+		return "", err
+	}
+
+	return filePath, nil
+}

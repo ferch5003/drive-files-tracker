@@ -2,35 +2,34 @@ package handlers
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"gopkg.in/telebot.v3"
 	"io"
 	"log"
 	"mime/multipart"
-	"net/http"
 	"path/filepath"
 	"telegram-bot-service/config"
+	"telegram-bot-service/internal/platform/client"
 	"time"
 )
 
 const (
 	_RFC3339OnlyDateFormat = "2006-01-02"
+	_RFC3339OnlyYearFormat = "2006"
 )
 
 const (
 	_errReadingImage      = "Hubo un error leyendo la imagen..."
 	_errProcessingMessage = "Hubo un error procesando la imagen..."
 	_errIdentifyingUser   = "Hubo un error identificando al usuario..."
-	_errConnectingService = "Hubo un error conectandose al servicio..."
-	_errProcessingService = "Hubo un error procesando los datos del servicio..."
 )
 
 type GDFamilyUnityBot struct {
 	TelegramBot *telebot.Bot
+	userClient  *client.UserServiceClient
 }
 
-func NewGDFamilyUnityBot(configs *config.EnvVars) (*GDFamilyUnityBot, error) {
+func NewGDFamilyUnityBot(configs *config.EnvVars, userClient *client.UserServiceClient) (*GDFamilyUnityBot, error) {
 	pref := telebot.Settings{
 		Token:  configs.GDUnityFamilyToken,
 		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
@@ -43,6 +42,7 @@ func NewGDFamilyUnityBot(configs *config.EnvVars) (*GDFamilyUnityBot, error) {
 
 	return &GDFamilyUnityBot{
 		TelegramBot: bot,
+		userClient:  userClient,
 	}, nil
 }
 
@@ -86,8 +86,22 @@ func (g *GDFamilyUnityBot) UploadImage(c telebot.Context) error {
 		return c.Send(_errIdentifyingUser)
 	}
 
+	// Send bot name in order to identify the bot sender.
+	err = writer.WriteField("bot_name", "UnityFamily")
+	if err != nil {
+		log.Println("err: ", err)
+		return c.Send(_errIdentifyingUser)
+	}
+
 	// Send date in order to identify the folder.
-	err = writer.WriteField("date", messageTime.Format(_RFC3339OnlyDateFormat))
+	err = writer.WriteField("date", messageTime.Format(_RFC3339OnlyYearFormat))
+	if err != nil {
+		log.Println("err: ", err)
+		return c.Send(_errIdentifyingUser)
+	}
+
+	// Send date in order to identify the folder.
+	err = writer.WriteField("filename", filename)
 	if err != nil {
 		log.Println("err: ", err)
 		return c.Send(_errIdentifyingUser)
@@ -98,47 +112,9 @@ func (g *GDFamilyUnityBot) UploadImage(c telebot.Context) error {
 		return c.Send(_errProcessingMessage)
 	}
 
-	// Making the request to outsource service to process.
-	req, err := http.NewRequest(
-		http.MethodPost,
-		"http://broker-td/gdrive-family-uploader",
-		bytes.NewReader(buffer.Bytes()))
-	if err != nil {
-		log.Println("err: ", err)
-		return c.Send(_errConnectingService)
-	}
-
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-
 	// Using a client to obtain the response of the service.
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
+	if err = g.userClient.PostPhoto(buffer, writer); err != nil {
 		log.Println("err: ", err)
-		return c.Send(_errProcessingMessage)
-	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Println("err: ", err)
-		}
-	}(resp.Body)
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Println("err: ", err)
-		return c.Send(_errProcessingService)
-	}
-
-	var data map[string]any
-	if err := json.Unmarshal(body, &data); err != nil {
-		log.Println("err: ", err)
-		return c.Send(_errProcessingService)
-	}
-
-	dataErr, ok := data["error"]
-	if ok {
-		log.Println("err: ", dataErr)
 		return c.Send(
 			"La imagen no puede ser procesada debido a un error del servicio, por favor contactarse con el dev...",
 		)
