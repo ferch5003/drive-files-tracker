@@ -9,14 +9,14 @@ import (
 // Queries.
 const (
 	_getAllUsersStmt       = `SELECT id, username FROM users;`
-	_getUserByUsernameStmt = `SELECT id, username FROM users WHERE username = ?;`
+	_getUserByUsernameStmt = `SELECT id, username FROM users WHERE username = $1;`
 	_findFolderIDStmt      = `SELECT folder_id
-						 FROM bot_user
-						 INNER JOIN bots
-						 ON bot_user.bot_id = ?
-						 INNER JOIN users
-						 ON bot_user.user_id = ?
-						 WHERE bot_user.date = ?;`
+							  FROM bot_user
+							  INNER JOIN bots
+							  ON bot_user.bot_id = $1
+							  INNER JOIN users
+							  ON bot_user.user_id = $2
+							  WHERE bot_user.date = $3;`
 )
 
 type Repository interface {

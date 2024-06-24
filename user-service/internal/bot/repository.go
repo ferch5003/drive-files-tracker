@@ -8,7 +8,7 @@ import (
 
 // Queries.
 const (
-	_getBotByNameStmt = `SELECT id, name FROM bots WHERE name = ?;`
+	_getBotByNameStmt = `SELECT id, name FROM bots WHERE name = $1;`
 )
 
 type Repository interface {

@@ -5,12 +5,14 @@ import (
 	"go.uber.org/fx"
 	"user-service/cmd/api/handler"
 	"user-service/config"
+	"user-service/internal/bot"
 	"user-service/internal/user"
 )
 
 var NewUserModule = fx.Module("user",
 	// Register Repository & Service
 	fx.Provide(user.NewRepository),
+	fx.Provide(bot.NewRepository),
 	fx.Provide(user.NewService),
 
 	// Register Handler
@@ -44,5 +46,6 @@ func NewUserRouter(app *fiber.App,
 func (u userRouter) Register() {
 	u.App.Route("/users", func(api fiber.Router) {
 		api.Get("/", u.Handler.GetAll).Name("get_all")
+		api.Get("/:user_username/bot/:bot_name", u.Handler.FindFolderID).Name("fid_folder_id")
 	}, "users.")
 }

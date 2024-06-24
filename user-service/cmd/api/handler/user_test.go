@@ -26,6 +26,11 @@ func (usm *userServiceMock) GetAll(ctx context.Context) ([]domain.User, error) {
 	return args.Get(0).([]domain.User), args.Error(1)
 }
 
+func (usm *userServiceMock) FindFolderID(ctx context.Context, userUsername, botName, date string) (string, error) {
+	args := usm.Called(ctx, userUsername, botName, date)
+	return args.Get(0).(string), args.Error(1)
+}
+
 func createUserServer(usm *userServiceMock) *fiber.App {
 	app := fiber.New()
 

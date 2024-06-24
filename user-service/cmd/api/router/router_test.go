@@ -1,12 +1,12 @@
 package router
 
 import (
-	"broker-td/config"
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"net/http/httptest"
 	"testing"
+	"user-service/config"
 )
 
 var _testConfigs = &config.EnvVars{}
