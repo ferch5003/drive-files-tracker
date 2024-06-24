@@ -2,3 +2,17 @@ CREATE TABLE IF NOT EXISTS users (
      id SERIAL PRIMARY KEY,
      username VARCHAR(255) NOT NULL UNIQUE
 );
+
+CREATE TABLE IF NOT EXISTS bots (
+     id SERIAL PRIMARY KEY,
+     name VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS bot_user (
+    bot_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    date VARCHAR(255),
+    folder_id VARCHAR(255) NOT NULL,
+
+    PRIMARY KEY (bot_id, user_id, date)
+);
