@@ -87,7 +87,7 @@ func (g *GDFamilyUnityBot) UploadImage(c telebot.Context) error {
 	}
 
 	// Send bot name in order to identify the bot sender.
-	err = writer.WriteField("bot_name", "UnityFamily")
+	err = writer.WriteField("bot_name", "GDUnityFamilyBot")
 	if err != nil {
 		log.Println("err: ", err)
 		return c.Send(_errIdentifyingUser)

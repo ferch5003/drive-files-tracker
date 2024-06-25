@@ -18,3 +18,10 @@ driveServiceApp
 # SQL Scripts
 000002_insert_default_users.down.sql
 000002_insert_default_users.up.sql
+
+# DB Files
+*/db-data/*/
+
+# Caddyfile
+Caddyfile
+Caddyfile.production

@@ -1,0 +1,61 @@
+version: '3'
+
+volumes:
+  pgdata:
+  mongodata:
+  rabbitmqdata:
+  caddy_data:
+    external: true
+  caddy_config:
+
+services:
+  caddy:
+    image: ferch5003/tfd-micro-caddy:1.0.0
+    deploy:
+      mode: replicated
+      replicas: 1
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+
+  broker-td:
+    image: ferch5003/broker-td:1.0.0
+    deploy:
+      mode: replicated
+      replicas: 1
+    ports:
+      - "3000:80"
+    environment:
+      PORT: 80
+
+  telegram-bot-service:
+    image: ferch5003/telegram-bot-service:1.0.0
+    deploy:
+      mode: replicated
+      replicas: 1
+    depends_on:
+      - user-service
+      - broker-td
+
+  user-service:
+    image: ferch5003/user-service:1.0.0
+    ports:
+      - "3001:80"
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      PORT: 80
+
+  drive-service:
+    image: ferch5003/drive-service:1.0.0
+    ports:
+      - "5001:5001"
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      PORT: 5001
