@@ -10,7 +10,7 @@ import (
 const (
 	_getAllUsersStmt       = `SELECT id, username FROM users;`
 	_getUserByUsernameStmt = `SELECT id, username FROM users WHERE username = $1;`
-	_findFolderIDStmt      = `SELECT folder_id
+	_findFolderIDStmt      = `SELECT DISTINCT folder_id
 							  FROM bot_user
 							  INNER JOIN bots
 							  ON bot_user.bot_id = $1
@@ -61,7 +61,7 @@ func (r *repository) Get(ctx context.Context, username string) (domain.User, err
 func (r *repository) FindFolderID(ctx context.Context, userID, botID int, date string) (string, error) {
 	var folderID string
 
-	if err := r.conn.GetContext(ctx, &folderID, _findFolderIDStmt, userID, botID, date); err != nil {
+	if err := r.conn.GetContext(ctx, &folderID, _findFolderIDStmt, botID, userID, date); err != nil {
 		return "", err
 	}
 
