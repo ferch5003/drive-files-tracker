@@ -20,7 +20,7 @@ func main() {
 		logger.Fatal(err.Error())
 	}
 
-	usersClient := client.NewUserServiceClient("http://broker-td")
+	usersClient := client.NewUserServiceClient(configurations.BrokerTDBaseURL)
 
 	app := fx.New(
 		// creates: config.EnvVars
