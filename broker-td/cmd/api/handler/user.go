@@ -1,20 +1,34 @@
 package handler
 
 import (
+	"broker-td/config"
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
 )
 
 type UserHandler struct {
+	userServiceBaseURL string
+	Client             *fiber.Agent
 }
 
-func NewUserHandler() *UserHandler {
-	return &UserHandler{}
+func NewUserHandler(configs *config.EnvVars) *UserHandler {
+	return &UserHandler{
+		userServiceBaseURL: configs.UserServiceBaseURL,
+		Client:             fiber.AcquireAgent(),
+	}
 }
 
 func (h *UserHandler) GetAll(c *fiber.Ctx) error {
-	agent := fiber.Get("http://user-service/users")
-	statusCode, body, errs := agent.Bytes()
+	req := h.Client.Request()
+	req.Header.SetMethod(fiber.MethodGet)
+	req.SetRequestURI(h.userServiceBaseURL + "/users")
+	if err := h.Client.Parse(); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err,
+		})
+	}
+
+	statusCode, body, errs := h.Client.Bytes()
 	if len(errs) > 0 {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": errs,

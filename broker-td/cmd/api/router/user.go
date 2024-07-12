@@ -2,6 +2,7 @@ package router
 
 import (
 	"broker-td/cmd/api/handler"
+	"broker-td/config"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 )
@@ -21,13 +22,17 @@ var NewUserModule = fx.Module("gdrive-family-uploader",
 
 type userRouter struct {
 	App     fiber.Router
+	config  *config.EnvVars
 	Handler *handler.UserHandler
 }
 
-func NewUserRouter(app *fiber.App,
+func NewUserRouter(
+	app *fiber.App,
+	config *config.EnvVars,
 	userHandler *handler.UserHandler) Router {
 	return &userRouter{
 		App:     app,
+		config:  config,
 		Handler: userHandler,
 	}
 }

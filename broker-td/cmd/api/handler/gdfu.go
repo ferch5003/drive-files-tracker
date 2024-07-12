@@ -1,19 +1,31 @@
 package handler
 
 import (
+	"broker-td/config"
 	"encoding/json"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"io"
-	"log"
 	"net/rpc"
 )
 
 type GDriveFamilyHandler struct {
+	userServiceBaseURL string
+	Client             *fiber.Agent
+	RPCClient          *rpc.Client
 }
 
-func NewGDriveFamilyHandler() *GDriveFamilyHandler {
-	return &GDriveFamilyHandler{}
+func NewGDriveFamilyHandler(configs *config.EnvVars) (*GDriveFamilyHandler, error) {
+	rpcClient, err := rpc.Dial("tcp", configs.DriveServiceBaseRPC)
+	if err != nil {
+		return nil, err
+	}
+
+	return &GDriveFamilyHandler{
+		userServiceBaseURL: configs.UserServiceBaseURL,
+		Client:             fiber.AcquireAgent(),
+		RPCClient:          rpcClient,
+	}, nil
 }
 
 type FamilyPayload struct {
@@ -26,8 +38,6 @@ type FamilyPayload struct {
 func (h *GDriveFamilyHandler) Post(c *fiber.Ctx) error {
 	photo, err := c.FormFile("tg-bot-file")
 	if err != nil {
-		log.Println("form file", err)
-
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err,
 		})
@@ -40,8 +50,6 @@ func (h *GDriveFamilyHandler) Post(c *fiber.Ctx) error {
 
 	reader, err := photo.Open()
 	if err != nil {
-		log.Println("reader", err)
-
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err,
 		})
@@ -49,19 +57,24 @@ func (h *GDriveFamilyHandler) Post(c *fiber.Ctx) error {
 
 	photoBytes, err := io.ReadAll(reader)
 	if err != nil {
-		log.Println("photoBytes", err)
-
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err,
 		})
 	}
 
 	folderIDURL := fmt.Sprintf(
-		"http://user-service/users/%s/bot/%s?date=%s", username, botName, date)
-	agent := fiber.Get(folderIDURL)
-	_, body, errs := agent.Bytes()
+		"%s/users/%s/bot/%s?date=%s", h.userServiceBaseURL, username, botName, date)
+	req := h.Client.Request()
+	req.Header.SetMethod(fiber.MethodGet)
+	req.SetRequestURI(folderIDURL)
+	if err := h.Client.Parse(); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err,
+		})
+	}
+
+	_, body, errs := h.Client.Bytes()
 	if len(errs) > 0 {
-		log.Println(errs)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": errs,
 		})
@@ -90,15 +103,8 @@ func (h *GDriveFamilyHandler) Post(c *fiber.Ctx) error {
 		Username: username,
 	}
 
-	client, err := rpc.Dial("tcp", "drive-service:5001")
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err,
-		})
-	}
-
 	var result string
-	if err := client.Call("Server.UploadDriveFile", familyPayload, &result); err != nil {
+	if err := h.RPCClient.Call("Server.UploadDriveFile", familyPayload, &result); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err,
 		})

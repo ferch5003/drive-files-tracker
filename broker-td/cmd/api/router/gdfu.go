@@ -26,7 +26,8 @@ type gDriveFamilyUploaderRouter struct {
 	Handler *handler.GDriveFamilyHandler
 }
 
-func NewGDriveFamilyUploaderRouter(app *fiber.App,
+func NewGDriveFamilyUploaderRouter(
+	app *fiber.App,
 	config *config.EnvVars,
 	gdfuHandler *handler.GDriveFamilyHandler) Router {
 	return &gDriveFamilyUploaderRouter{
