@@ -36,6 +36,8 @@ func main() {
 
 		// creates: *handlers.GDFamilyUnityBot
 		fx.Provide(handlers.NewGDFamilyUnityBot),
+		// creates: *handlers.GDFamilyGardenBot
+		fx.Provide(handlers.NewGDFamilyGardenBot),
 
 		// Start Bots.
 		fx.Invoke(bootstrap.Start),

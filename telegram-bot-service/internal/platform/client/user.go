@@ -93,7 +93,6 @@ func (c *UserServiceClient) PostPhoto(buffer bytes.Buffer, writer *multipart.Wri
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Println("err: ", err)
 		return err
 	}
 

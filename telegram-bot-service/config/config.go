@@ -8,7 +8,8 @@ import (
 
 type EnvVars struct {
 	// Telegram Data
-	GDUnityFamilyToken string
+	GDUnityFamilyToken  string
+	GDGardenFamilyToken string
 
 	// BaseURLs
 	BrokerTDBaseURL string
@@ -29,10 +30,12 @@ func NewConfigurations() (*EnvVars, error) {
 	}
 
 	gdUnityFamilyToken := os.Getenv("GD_UNITY_FAMILY_TOKEN")
+	gdGardenFamilyToken := os.Getenv("GD_GARDEN_FAMILY_TOKEN")
 	brokerTDBaseURL := os.Getenv("BROKER_TD_BASE_URL")
 
 	environment := &EnvVars{
-		GDUnityFamilyToken: gdUnityFamilyToken,
+		GDUnityFamilyToken:  gdUnityFamilyToken,
+		GDGardenFamilyToken: gdGardenFamilyToken,
 
 		BrokerTDBaseURL: brokerTDBaseURL,
 	}

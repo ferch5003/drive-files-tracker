@@ -20,25 +20,34 @@ func NewTelegramBotGroup() TelegramBotGroup {
 
 func Start(
 	lc fx.Lifecycle,
-	gdBotHandler *handlers.GDFamilyUnityBot,
+	gdFamilyUnityBotHandler *handlers.GDFamilyUnityBot,
+	gdFamilyGardenBotHandler *handlers.GDFamilyGardenBot,
 	usersClient *client.UserServiceClient,
 	logger *zap.Logger) {
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			logger.Info(fmt.Sprintf("Starting Telegram Bots Hanlers..."))
 
+			usernames, err := usersClient.GetUsernames()
+			if err != nil {
+				logger.Error(err.Error())
+				return err
+			}
+
 			go func() {
-				logger.Info(fmt.Sprintf("gdBotHandler..."))
+				logger.Info(fmt.Sprintf("gdFamilyUnityBotHandler..."))
 
-				usernames, err := usersClient.GetUsernames()
-				if err != nil {
-					logger.Error(err.Error())
-					return
-				}
+				gdFamilyUnityBotHandler.TelegramBot.Use(middleware.Authorize(logger, usernames))
+				gdFamilyUnityBotHandler.TelegramBot.Handle(telebot.OnPhoto, gdFamilyUnityBotHandler.UploadImage)
+				gdFamilyUnityBotHandler.TelegramBot.Start()
+			}()
 
-				gdBotHandler.TelegramBot.Use(middleware.Authorize(logger, usernames))
-				gdBotHandler.TelegramBot.Handle(telebot.OnPhoto, gdBotHandler.UploadImage)
-				gdBotHandler.TelegramBot.Start()
+			go func() {
+				logger.Info(fmt.Sprintf("gdFamilyGardenBotHandler..."))
+
+				gdFamilyGardenBotHandler.TelegramBot.Use(middleware.Authorize(logger, usernames))
+				gdFamilyGardenBotHandler.TelegramBot.Handle(telebot.OnPhoto, gdFamilyGardenBotHandler.UploadImage)
+				gdFamilyGardenBotHandler.TelegramBot.Start()
 			}()
 
 			return nil

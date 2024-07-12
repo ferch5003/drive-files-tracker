@@ -13,16 +13,16 @@ import (
 	"time"
 )
 
-const _gdUnityFamilyBotName = "GDUnityFamilyBot"
+const _gdFamilyGardenBotName = "GDFamilyGardenBot"
 
-type GDFamilyUnityBot struct {
+type GDFamilyGardenBot struct {
 	TelegramBot *telebot.Bot
 	userClient  *client.UserServiceClient
 }
 
-func NewGDFamilyUnityBot(configs *config.EnvVars, userClient *client.UserServiceClient) (*GDFamilyUnityBot, error) {
+func NewGDFamilyGardenBot(configs *config.EnvVars, userClient *client.UserServiceClient) (*GDFamilyGardenBot, error) {
 	pref := telebot.Settings{
-		Token:  configs.GDUnityFamilyToken,
+		Token:  configs.GDGardenFamilyToken,
 		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
 	}
 
@@ -31,13 +31,13 @@ func NewGDFamilyUnityBot(configs *config.EnvVars, userClient *client.UserService
 		return nil, err
 	}
 
-	return &GDFamilyUnityBot{
+	return &GDFamilyGardenBot{
 		TelegramBot: bot,
 		userClient:  userClient,
 	}, nil
 }
 
-func (g *GDFamilyUnityBot) UploadImage(c telebot.Context) error {
+func (g *GDFamilyGardenBot) UploadImage(c telebot.Context) error {
 	// Get the photo information
 	photo := c.Message().Photo
 
@@ -78,7 +78,7 @@ func (g *GDFamilyUnityBot) UploadImage(c telebot.Context) error {
 	}
 
 	// Send bot name in order to identify the bot sender.
-	err = writer.WriteField("bot_name", _gdUnityFamilyBotName)
+	err = writer.WriteField("bot_name", _gdFamilyGardenBotName)
 	if err != nil {
 		log.Println("err: ", err)
 		return c.Send(_errIdentifyingUser)
