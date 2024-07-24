@@ -1,14 +1,24 @@
 package handler
 
 import (
+	"broker-td/config"
 	"github.com/gofiber/fiber/v2"
+	"net/rpc"
 )
 
 type GDriveFolderCreatorHandler struct {
+	RPCClient *rpc.Client
 }
 
-func NewGDriveFolderCreatorHandler() (*GDriveFolderCreatorHandler, error) {
-	return &GDriveFolderCreatorHandler{}, nil
+func NewGDriveFolderCreatorHandler(configs *config.EnvVars) (*GDriveFolderCreatorHandler, error) {
+	rpcClient, err := rpc.Dial("tcp", configs.DriveServiceBaseRPC)
+	if err != nil {
+		return nil, err
+	}
+
+	return &GDriveFolderCreatorHandler{
+		RPCClient: rpcClient,
+	}, nil
 }
 
 type botUser struct {
@@ -19,6 +29,10 @@ type botUser struct {
 	IsParent bool   `json:"is_parent"`
 }
 
+type BotUsersPayload struct {
+	BotUsers []botUser
+}
+
 func (h *GDriveFolderCreatorHandler) Post(c *fiber.Ctx) error {
 	var botUsers []botUser
 	if err := c.BodyParser(&botUsers); err != nil {
@@ -27,7 +41,18 @@ func (h *GDriveFolderCreatorHandler) Post(c *fiber.Ctx) error {
 		})
 	}
 
+	payload := BotUsersPayload{
+		BotUsers: botUsers,
+	}
+
+	var result BotUsersPayload
+	if err := h.RPCClient.Call("Server.CreateYearlyFolders", payload, &result); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err,
+		})
+	}
+
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"data": botUsers,
+		"data": result.BotUsers,
 	})
 }

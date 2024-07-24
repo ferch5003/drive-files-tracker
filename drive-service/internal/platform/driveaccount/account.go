@@ -74,3 +74,28 @@ func (s ServiceAccount) CreateFile(
 
 	return file, nil
 }
+
+func (s ServiceAccount) CreateFolder(
+	service *drive.Service,
+	name string,
+	mimeType string,
+	parentID string) (*drive.File, error) {
+	f := &drive.File{
+		MimeType: mimeType,
+		Name:     name,
+		Parents:  []string{parentID},
+	}
+
+	folder, err := service.Files.Create(f).Do()
+	if err != nil {
+		return nil, err
+	}
+
+	return folder, nil
+}
+
+func (s ServiceAccount) RemoveFolder(
+	service *drive.Service,
+	folderID string) error {
+	return service.Files.Delete(folderID).Do()
+}

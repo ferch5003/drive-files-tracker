@@ -1,6 +1,8 @@
 # Build tiny docker image.
 FROM alpine:latest
 
+RUN apk add --no-cache tzdata
+
 RUN mkdir /config
 
 COPY ./config/client_secret.json /config
