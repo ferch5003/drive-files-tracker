@@ -45,6 +45,7 @@ func main() {
 
 		// Provide modules
 		router.NewGDriveFamilyUploaderModule,
+		router.NewGDriveFolderCreatorModule,
 		router.NewUserModule,
 
 		// Start web server.

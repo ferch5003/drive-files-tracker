@@ -10,6 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+	"user-service/cmd/api/cron"
 	"user-service/cmd/api/router"
 	"user-service/config"
 )
@@ -32,6 +33,7 @@ func Start(
 	cfg *config.EnvVars,
 	app *fiber.App,
 	router *router.GeneralRouter,
+	folderCronJob *cron.FolderCronJob,
 	logger *zap.Logger) {
 	port := _defaultPort // Default Port
 	if cfg != nil && cfg.Port != "" {
@@ -62,6 +64,14 @@ func Start(
 
 				if err := app.Listen(":" + port); err != nil {
 					logger.Error(err.Error())
+				}
+			}()
+
+			go func() {
+				logger.Info("Starting CRON jobs...")
+
+				if err := folderCronJob.Run(); err != nil {
+					logger.Info("err: ", zap.Error(err))
 				}
 			}()
 

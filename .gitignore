@@ -18,8 +18,8 @@ driveServiceApp
 # SQL Scripts
 000002_insert_default_users.down.sql
 000002_insert_default_users.up.sql
-000003_alter_table_bot_user_is_parent_column.down.sql
-000003_alter_table_bot_user_is_parent_column.up.sql
+000004_insert_default_bot_user_parent.down.sql
+000004_insert_default_bot_user_parent.up.sql
 
 # DB Files
 */db-data/*/
