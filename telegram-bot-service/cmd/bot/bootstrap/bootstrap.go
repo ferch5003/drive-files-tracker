@@ -22,6 +22,7 @@ func Start(
 	lc fx.Lifecycle,
 	gdFamilyUnityBotHandler *handlers.GDFamilyUnityBot,
 	gdFamilyGardenBotHandler *handlers.GDFamilyGardenBot,
+	gdOSBotHandler *handlers.GDOSCommercialBot,
 	usersClient *client.UserServiceClient,
 	logger *zap.Logger) {
 	lc.Append(fx.Hook{
@@ -48,6 +49,14 @@ func Start(
 				gdFamilyGardenBotHandler.TelegramBot.Use(middleware.Authorize(logger, usernames))
 				gdFamilyGardenBotHandler.TelegramBot.Handle(telebot.OnPhoto, gdFamilyGardenBotHandler.UploadImage)
 				gdFamilyGardenBotHandler.TelegramBot.Start()
+			}()
+
+			go func() {
+				logger.Info(fmt.Sprintf("gdOSCommercialBotHandler..."))
+
+				gdOSBotHandler.TelegramBot.Use(middleware.Authorize(logger, usernames))
+				gdOSBotHandler.TelegramBot.Handle(telebot.OnPhoto, gdOSBotHandler.UploadImage)
+				gdOSBotHandler.TelegramBot.Start()
 			}()
 
 			return nil
