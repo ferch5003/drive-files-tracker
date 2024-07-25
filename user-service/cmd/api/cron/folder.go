@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 	"user-service/config"
 	"user-service/internal/botuser"
+	"user-service/internal/domain"
 	"user-service/internal/platform/client"
 )
 
@@ -71,13 +72,31 @@ func (f *FolderCronJob) createYearlyFolders() {
 		return
 	}
 
-	f.logger.Info(fmt.Sprintf("Actual Bot users: %+v", botUsers))
+	response, err := f.brokerClient.PostFolderParentsCreations(b)
+	if err != nil {
+		return
+	}
 
-	newBotUsers, err := f.brokerClient.PostFolderParentsCreations(b)
+	data, ok := response["data"]
+	if !ok {
+		f.logger.Error("cannot process bot user empty")
+		return
+	}
+
+	body, err := json.Marshal(data)
 	if err != nil {
 		f.logger.Error(err.Error())
 		return
 	}
 
-	f.logger.Info(fmt.Sprintf("New Bot users: %+v", newBotUsers))
+	var newBotUserChildren []domain.BotUser
+	if err := json.Unmarshal(body, &newBotUserChildren); err != nil {
+		f.logger.Error(err.Error())
+		return
+	}
+
+	if err := f.botUserService.SaveMany(f.ctx, newBotUserChildren); err != nil {
+		f.logger.Error(err.Error())
+		return
+	}
 }

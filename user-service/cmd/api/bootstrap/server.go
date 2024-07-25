@@ -68,6 +68,12 @@ func Start(
 			}()
 
 			go func() {
+				if !cfg.ActivateCRON {
+					logger.Info("CRON jobs disabled, skipping...")
+
+					return
+				}
+
 				logger.Info("Starting CRON jobs...")
 
 				if err := folderCronJob.Run(); err != nil {

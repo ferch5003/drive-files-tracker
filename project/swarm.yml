@@ -22,7 +22,7 @@ services:
       - caddy_config:/config
 
   broker-td:
-    image: ferch5003/broker-td:1.0.0
+    image: ferch5003/broker-td:1.0.2
     deploy:
       mode: replicated
       replicas: 1
@@ -32,7 +32,7 @@ services:
       PORT: 80
 
   telegram-bot-service:
-    image: ferch5003/telegram-bot-service:1.0.0
+    image: ferch5003/telegram-bot-service:1.0.2
     deploy:
       mode: replicated
       replicas: 1
@@ -41,7 +41,7 @@ services:
       - broker-td
 
   user-service:
-    image: ferch5003/user-service:1.0.0
+    image: ferch5003/user-service:1.0.2
     ports:
       - "3001:80"
     deploy:
@@ -49,9 +49,11 @@ services:
       replicas: 1
     environment:
       PORT: 80
+      IS_DEVELOPMENT: "true"
+      ACTIVATE_CRON: ""
 
   drive-service:
-    image: ferch5003/drive-service:1.0.0
+    image: ferch5003/drive-service:1.0.2
     ports:
       - "5001:5001"
     deploy:
