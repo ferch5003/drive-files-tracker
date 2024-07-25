@@ -7,6 +7,7 @@ import (
 
 type Service interface {
 	GetAllParents(ctx context.Context) ([]domain.BotUser, error)
+	SaveMany(ctx context.Context, botUsers []domain.BotUser) error
 }
 
 type service struct {
@@ -21,4 +22,8 @@ func NewService(botUserRepository Repository) Service {
 
 func (s service) GetAllParents(ctx context.Context) ([]domain.BotUser, error) {
 	return s.botUserRepository.GetAllParents(ctx)
+}
+
+func (s service) SaveMany(ctx context.Context, botUsers []domain.BotUser) error {
+	return s.botUserRepository.SaveMany(ctx, botUsers)
 }
