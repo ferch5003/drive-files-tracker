@@ -1,12 +1,11 @@
-# Build tiny docker image.
-FROM alpine:latest
+FROM golang:latest as build-stage
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN GOOS=linux CGO_ENABLED=0 go build -o userServiceApp ./cmd/api
 
-RUN apk add --no-cache tzdata
-
-RUN mkdir /app
-
-COPY go.mod /
-COPY .env /
-COPY userServiceApp /app
-
-CMD ["/app/userServiceApp"]
+FROM alpine:latest as build-release-stage
+WORKDIR /app
+COPY --from=build-stage /app/userServiceApp /app/userServiceApp
+ENTRYPOINT ["/app/brokerTDApp"]

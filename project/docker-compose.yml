@@ -26,6 +26,8 @@ services:
     deploy:
       mode: replicated
       replicas: 1
+    cap_add:
+      - SYS_ADMIN
     depends_on:
       - user-service
     user: '${UID}:${GID}'
@@ -77,21 +79,13 @@ services:
       POSTGRES_DB: users_tbs
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
-      - pgdata:/var/lib/postgresql/data/
+      - ./pgdata/000001_init.up.sql:/docker-entrypoint-initdb.d/000001_init.up.sql
+      - ./pgdata/000002_insert_default_users.up.sql:/docker-entrypoint-initdb.d/000002_insert_default_users.up.sql
+      - ./pgdata/000003_alter_table_bot_user_is_parent_column.up.sql:/docker-entrypoint-initdb.d/000003_alter_table_bot_user_is_parent_column.up.sql
+      - ./pgdata/000004_insert_default_bot_user_parent.up.sql:/docker-entrypoint-initdb.d/000004_insert_default_bot_user_parent.up.sql
     user: '${UID}:${GID}'
     healthcheck:
       test: pg_isready -U postgres -d users_tbs
       interval: 10s
       timeout: 3s
       retries: 5
-
-  migrate:
-    image: migrate/migrate
-    volumes:
-      - ./../user-service/migrations:/migrations
-    user: '${UID}:${GID}'
-    command: [ "-path", "/migrations/", "-database",  "postgres://postgres:password@postgres-tbs:5432/users_tbs?sslmode=disable", "up", "3" ]
-    links:
-      - postgres-tbs
-    depends_on:
-      - postgres-tbs

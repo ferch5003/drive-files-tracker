@@ -24,7 +24,6 @@ func NewServer(ctx context.Context, serviceAccount driveaccount.ServiceAccount) 
 	}
 
 	driveService, err := drive.NewService(ctx, option.WithHTTPClient(client))
-
 	if err != nil {
 		return nil, err
 	}

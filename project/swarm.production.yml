@@ -34,7 +34,7 @@ services:
       PORT: 80
 
   telegram-bot-service:
-    image: ferch5003/telegram-bot-service:1.0.3
+    image: ferch5003/telegram-bot-service:1.0.4
     deploy:
       mode: replicated
       replicas: 1

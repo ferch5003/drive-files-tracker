@@ -1,16 +1,13 @@
-# Build tiny docker image.
-FROM alpine:latest
-
-RUN apk add --no-cache tzdata
-
-RUN mkdir /config
-
+FROM golang:latest as build-stage
+WORKDIR /app
 COPY ./config/client_secret.json /config
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN GOOS=linux CGO_ENABLED=0 go build -o driveServiceApp ./cmd/api
 
-RUN mkdir /app
-
-COPY go.mod /
-COPY .env /
-COPY driveServiceApp /app
-
-CMD ["/app/driveServiceApp"]
+FROM alpine:latest as build-release-stage
+RUN apk add --no-cache tzdata
+WORKDIR /app
+COPY --from=build-stage /app/driveServiceApp /app/driveServiceApp
+ENTRYPOINT ["/app/driveServiceApp"]

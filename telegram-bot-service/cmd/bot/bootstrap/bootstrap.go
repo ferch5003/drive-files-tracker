@@ -35,29 +35,48 @@ func Start(
 				return err
 			}
 
-			go func() {
+			go func(usernames []string) {
+				defer func() {
+					if r := recover(); r != nil {
+						logger.Error(fmt.Sprintf("Recovered from panic: %v", r))
+					}
+				}()
+
 				logger.Info(fmt.Sprintf("gdFamilyUnityBotHandler..."))
 
 				gdFamilyUnityBotHandler.TelegramBot.Use(middleware.Authorize(logger, usernames))
 				gdFamilyUnityBotHandler.TelegramBot.Handle(telebot.OnPhoto, gdFamilyUnityBotHandler.UploadImage)
+				gdFamilyUnityBotHandler.TelegramBot.Handle("/obtener_estado_predial", gdFamilyUnityBotHandler.GetPropertyAccountStatement)
 				gdFamilyUnityBotHandler.TelegramBot.Start()
-			}()
+			}(usernames)
 
-			go func() {
+			go func(usernames []string) {
+				defer func() {
+					if r := recover(); r != nil {
+						logger.Error(fmt.Sprintf("Recovered from panic: %v", r))
+					}
+				}()
+
 				logger.Info(fmt.Sprintf("gdFamilyGardenBotHandler..."))
 
 				gdFamilyGardenBotHandler.TelegramBot.Use(middleware.Authorize(logger, usernames))
 				gdFamilyGardenBotHandler.TelegramBot.Handle(telebot.OnPhoto, gdFamilyGardenBotHandler.UploadImage)
 				gdFamilyGardenBotHandler.TelegramBot.Start()
-			}()
+			}(usernames)
 
-			go func() {
+			go func(usernames []string) {
+				defer func() {
+					if r := recover(); r != nil {
+						logger.Error(fmt.Sprintf("Recovered from panic: %v", r))
+					}
+				}()
+
 				logger.Info(fmt.Sprintf("gdOSCommercialBotHandler..."))
 
 				gdOSBotHandler.TelegramBot.Use(middleware.Authorize(logger, usernames))
 				gdOSBotHandler.TelegramBot.Handle(telebot.OnPhoto, gdOSBotHandler.UploadImage)
 				gdOSBotHandler.TelegramBot.Start()
-			}()
+			}(usernames)
 
 			return nil
 		},

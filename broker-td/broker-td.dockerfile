@@ -1,10 +1,11 @@
-# Build tiny docker image.
-FROM alpine:latest
+FROM golang:latest as build-stage
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN GOOS=linux CGO_ENABLED=0 go build -o brokerTDApp ./cmd/api
 
-RUN mkdir /app
-
-COPY go.mod /
-COPY .env /
-COPY brokerTDApp /app
-
-CMD ["/app/brokerTDApp"]
+FROM alpine:latest as build-release-stage
+WORKDIR /app
+COPY --from=build-stage /app/brokerTDApp /app/brokerTDApp
+ENTRYPOINT ["/app/brokerTDApp"]

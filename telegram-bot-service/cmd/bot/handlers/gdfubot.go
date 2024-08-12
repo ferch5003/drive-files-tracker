@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"github.com/chromedp/chromedp"
 	"gopkg.in/telebot.v3"
 	"io"
 	"log"
@@ -16,8 +18,9 @@ import (
 const _gdUnityFamilyBotName = "GDUnityFamilyBot"
 
 type GDFamilyUnityBot struct {
-	TelegramBot *telebot.Bot
-	userClient  *client.UserServiceClient
+	TelegramBot   *telebot.Bot
+	userClient    *client.UserServiceClient
+	orionStateURL string
 }
 
 func NewGDFamilyUnityBot(configs *config.EnvVars, userClient *client.UserServiceClient) (*GDFamilyUnityBot, error) {
@@ -32,8 +35,9 @@ func NewGDFamilyUnityBot(configs *config.EnvVars, userClient *client.UserService
 	}
 
 	return &GDFamilyUnityBot{
-		TelegramBot: bot,
-		userClient:  userClient,
+		TelegramBot:   bot,
+		userClient:    userClient,
+		orionStateURL: configs.OrionStateURL,
 	}, nil
 }
 
@@ -112,4 +116,55 @@ func (g *GDFamilyUnityBot) UploadImage(c telebot.Context) error {
 	}
 
 	return c.Send(fmt.Sprintf("¡Imagen guardada! Nombre guardado de la imagen: **%s**", filename))
+}
+
+func (g *GDFamilyUnityBot) GetPropertyAccountStatement(c telebot.Context) error {
+	// Default 30 seconds of timeout, after that returns error for context deadline.
+	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
+
+	// Grouping Headless, No first run, disable GPU and No sandbox option.
+	options := append(chromedp.DefaultExecAllocatorOptions[:],
+		chromedp.DisableGPU,
+		chromedp.NoSandbox,
+	)
+	allocCtx, cancel := chromedp.NewExecAllocator(ctxWithTimeout, options...)
+	defer cancel()
+
+	ctx, cancel := chromedp.NewContext(
+		allocCtx,
+		chromedp.WithLogf(log.Printf),
+	)
+	defer cancel()
+
+	messageTime := c.Message().Time()
+	now := messageTime.Format(_RFC3339OnlyDateFormat)
+
+	log.Printf("Processing image at: %s\n", now)
+
+	var buf []byte
+	if err := chromedp.Run(ctx, elementScreenshot(g.orionStateURL, "body", &buf)); err != nil {
+		log.Println("err: ", err)
+		return c.Send("El servicio esta presentando inconvenientes, por favor intente mas tarde...")
+	}
+
+	reader := bytes.NewReader(buf)
+
+	return c.Send(&telebot.Photo{
+		File:    telebot.FromReader(reader),
+		Caption: fmt.Sprintf("Estado de cuenta predial generado el %s", now),
+	})
+}
+
+// elementScreenshot takes a screenshot of a specific element.
+func elementScreenshot(url, sel string, res *[]byte) chromedp.Tasks {
+	return chromedp.Tasks{
+		chromedp.Navigate(url),
+		chromedp.WaitVisible(sel, chromedp.ByQuery),
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			log.Println("Element visible:", sel)
+			return nil
+		}),
+		chromedp.Screenshot(sel, res, chromedp.NodeVisible),
+	}
 }
