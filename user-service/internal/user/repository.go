@@ -17,6 +17,16 @@ const (
 							  INNER JOIN users
 							  ON bot_user.user_id = $2
 							  WHERE bot_user.date = $3;`
+	_getSpreadsheetDataStmt = `SELECT 
+    						   bot_user.spreadsheet_id, bot_user.spreadsheet_gid, bot_user.spreadsheet_column
+							   FROM bot_user
+							   INNER JOIN bots
+							   ON bot_user.bot_id = bots.id
+						       INNER JOIN users
+							   ON bot_user.user_id = users.id
+						       WHERE bot_user.bot_id = $1
+							   AND bot_user.user_id = $2
+						       AND bot_user.date = $3;`
 )
 
 type Repository interface {
@@ -28,6 +38,9 @@ type Repository interface {
 
 	// FindFolderID obtain the folder ID associated with a user and a bot.
 	FindFolderID(ctx context.Context, userID, botID int, date string) (string, error)
+
+	// GetSpreadsheetData obtain the spreadsheet ID and GID associated with a user and a bot.
+	GetSpreadsheetData(ctx context.Context, userID, botID int, date string) (id, gid, column string, err error)
 }
 
 type repository struct {
@@ -66,4 +79,23 @@ func (r *repository) FindFolderID(ctx context.Context, userID, botID int, date s
 	}
 
 	return folderID, nil
+}
+
+func (r *repository) GetSpreadsheetData(
+	ctx context.Context,
+	userID,
+	botID int,
+	date string,
+) (id, gid, column string, err error) {
+	var data struct {
+		SpreadsheetID     string `db:"spreadsheet_id"`
+		SpreadsheetGID    string `db:"spreadsheet_gid"`
+		SpreadsheetColumn string `db:"spreadsheet_column"`
+	}
+
+	if err := r.conn.GetContext(ctx, &data, _getSpreadsheetDataStmt, botID, userID, date); err != nil {
+		return "", "", "", err
+	}
+
+	return data.SpreadsheetID, data.SpreadsheetGID, data.SpreadsheetColumn, nil
 }

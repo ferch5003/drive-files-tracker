@@ -2,6 +2,7 @@ package handler
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"log"
 	"user-service/internal/user"
 )
 
@@ -40,5 +41,25 @@ func (h *UserHandler) FindFolderID(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"folder_id": folderID,
+	})
+}
+
+func (h *UserHandler) GetSpreadsheetData(c *fiber.Ctx) error {
+	userUsername := c.Params("user_username")
+	botName := c.Params("bot_name")
+	date := c.Params("date")
+
+	id, gid, column, err := h.userService.GetSpreadsheetData(c.Context(), userUsername, botName, date)
+	log.Println("IDS", id, gid)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"spreadsheet_id":     id,
+		"spreadsheet_gid":    gid,
+		"spreadsheet_column": column,
 	})
 }

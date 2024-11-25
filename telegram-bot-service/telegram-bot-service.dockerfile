@@ -1,11 +1,11 @@
-FROM golang:latest as build-stage
+FROM golang:latest AS build-stage
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 RUN GOOS=linux CGO_ENABLED=0 go build -o telegramApp ./cmd/bot
 
-FROM alpine:latest as build-release-stage
+FROM alpine:latest AS build-release-stage
 
 # Installs latest Chromium package.
 RUN apk update && apk upgrade && apk add --no-cache bash git && apk add --no-cache chromium
@@ -23,4 +23,4 @@ CMD chromium-browser --headless --disable-gpu --safebrowsing-disable-auto-update
 
 WORKDIR /app
 COPY --from=build-stage /app/telegramApp /app/telegramApp
-ENTRYPOINT ["/app/driveServiceApp"]
+ENTRYPOINT ["/app/telegramApp"]

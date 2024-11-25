@@ -29,10 +29,13 @@ func NewGDriveFamilyHandler(configs *config.EnvVars) (*GDriveFamilyHandler, erro
 }
 
 type FamilyPayload struct {
-	Photo    []byte
-	FolderID string
-	Filename string
-	Username string
+	Photo             []byte
+	FolderID          string
+	Filename          string
+	Username          string
+	SpreadsheetID     string
+	SpreadsheetGID    string
+	SpreadsheetColumn string
 }
 
 func (h *GDriveFamilyHandler) Post(c *fiber.Ctx) error {
@@ -64,43 +67,48 @@ func (h *GDriveFamilyHandler) Post(c *fiber.Ctx) error {
 
 	folderIDURL := fmt.Sprintf(
 		"%s/users/%s/bot/%s?date=%s", h.userServiceBaseURL, username, botName, date)
-	req := h.Client.Request()
-	req.Header.SetMethod(fiber.MethodGet)
-	req.SetRequestURI(folderIDURL)
-	if err := h.Client.Parse(); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err,
-		})
-	}
+	folderIDBody, err := makeClientRequest(fiber.MethodGet, folderIDURL, h.Client)
 
-	_, body, errs := h.Client.Bytes()
-	if len(errs) > 0 {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": errs,
-		})
-	}
-
-	var data struct {
+	var folderData struct {
 		FolderID string `json:"folder_id"`
 	}
-	err = json.Unmarshal(body, &data)
+	err = json.Unmarshal(folderIDBody, &folderData)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err,
 		})
 	}
 
-	if data.FolderID == "" {
+	if folderData.FolderID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err,
 		})
 	}
 
+	spreadsheetsURL := fmt.Sprintf(
+		"%s/users/%s/bot/%s/date/%s/spreadsheets", h.userServiceBaseURL, username, botName, date)
+	spreadsheetsBody, err := makeClientRequest(fiber.MethodGet, spreadsheetsURL, h.Client)
+
+	var spreadSheetData struct {
+		SpreadsheetID     string `json:"spreadsheet_id"`
+		SpreadsheetGID    string `json:"spreadsheet_gid"`
+		SpreadsheetColumn string `json:"spreadsheet_column"`
+	}
+	err = json.Unmarshal(spreadsheetsBody, &spreadSheetData)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err,
+		})
+	}
+
 	familyPayload := FamilyPayload{
-		Photo:    photoBytes,
-		FolderID: data.FolderID,
-		Filename: filename,
-		Username: username,
+		Photo:             photoBytes,
+		FolderID:          folderData.FolderID,
+		Filename:          filename,
+		Username:          username,
+		SpreadsheetID:     spreadSheetData.SpreadsheetID,
+		SpreadsheetGID:    spreadSheetData.SpreadsheetGID,
+		SpreadsheetColumn: spreadSheetData.SpreadsheetColumn,
 	}
 
 	var result string
@@ -113,4 +121,20 @@ func (h *GDriveFamilyHandler) Post(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"data": result,
 	})
+}
+
+func makeClientRequest(method, url string, client *fiber.Agent) ([]byte, error) {
+	req := client.Request()
+	req.Header.SetMethod(method)
+	req.SetRequestURI(url)
+	if err := client.Parse(); err != nil {
+		return nil, err
+	}
+
+	_, body, errs := client.Bytes()
+	if len(errs) > 0 {
+		return nil, errs[0]
+	}
+
+	return body, nil
 }

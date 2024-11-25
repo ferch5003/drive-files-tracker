@@ -47,5 +47,8 @@ func (u userRouter) Register() {
 	u.App.Route("/users", func(api fiber.Router) {
 		api.Get("/", u.Handler.GetAll).Name("get_all")
 		api.Get("/:user_username/bot/:bot_name", u.Handler.FindFolderID).Name("fid_folder_id")
+		api.
+			Get("/:user_username/bot/:bot_name/date/:date/spreadsheets", u.Handler.GetSpreadsheetData).
+			Name("get_spreadsheet_data")
 	}, "users.")
 }

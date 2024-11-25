@@ -20,6 +20,8 @@ driveServiceApp
 000002_insert_default_users.up.sql
 000004_insert_default_bot_user_parent.down.sql
 000004_insert_default_bot_user_parent.up.sql
+000006_update_bot_user_with_spreadsheet_id.down.sql
+000006_update_bot_user_with_spreadsheet_id.up.sql
 
 # DB Files
 */db-data/*/

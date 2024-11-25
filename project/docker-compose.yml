@@ -14,8 +14,8 @@ services:
     deploy:
       mode: replicated
       replicas: 1
-    environment:
-      PORT: 80
+    env_file:
+      - ./../broker-td/.env
     user: '${UID}:${GID}'
 
   telegram-bot-service:
@@ -30,6 +30,8 @@ services:
       - SYS_ADMIN
     depends_on:
       - user-service
+    env_file:
+      - ./../telegram-bot-service/.env
     user: '${UID}:${GID}'
 
   user-service:
@@ -42,13 +44,10 @@ services:
     deploy:
       mode: replicated
       replicas: 1
-    environment:
-      POSTGRE_DSN: "host=postgres-tbs port=5432 user=postgres password=password dbname=users_tbs sslmode=disable timezone=UTC connect_timeout=3"
-      PORT: 80
-      IS_DEVELOPMENT: "true"
-      ACTIVATE_CRON: ""
     depends_on:
       - postgres-tbs
+    env_file:
+      - ./../user-service/.env
     user: '${UID}:${GID}'
 
   drive-service:
@@ -61,8 +60,8 @@ services:
     deploy:
       mode: replicated
       replicas: 1
-    environment:
-      PORT: 5001
+    env_file:
+      - ./../drive-service/.env
     user: '${UID}:${GID}'
 
   postgres-tbs:
@@ -83,6 +82,8 @@ services:
       - ./pgdata/000002_insert_default_users.up.sql:/docker-entrypoint-initdb.d/000002_insert_default_users.up.sql
       - ./pgdata/000003_alter_table_bot_user_is_parent_column.up.sql:/docker-entrypoint-initdb.d/000003_alter_table_bot_user_is_parent_column.up.sql
       - ./pgdata/000004_insert_default_bot_user_parent.up.sql:/docker-entrypoint-initdb.d/000004_insert_default_bot_user_parent.up.sql
+      - ./pgdata/000005_alter_table_bot_user_spreadsheet_id_gid_column.up.sql:/docker-entrypoint-initdb.d/000005_alter_table_bot_user_spreadsheet_id_gid_column.up.sql
+      - ./pgdata/000006_update_bot_user_with_spreadsheet_id.up.sql:/docker-entrypoint-initdb.d/000006_update_bot_user_with_spreadsheet_id.up.sql
     user: '${UID}:${GID}'
     healthcheck:
       test: pg_isready -U postgres -d users_tbs

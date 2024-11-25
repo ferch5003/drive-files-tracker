@@ -12,9 +12,13 @@ import (
 const _RFC3339OnlyYearFormat = "2006"
 
 type FamilyPayload struct {
-	Photo    []byte
-	FolderID string
-	Filename string
+	Photo             []byte
+	FolderID          string
+	Filename          string
+	Username          string
+	SpreadsheetID     string
+	SpreadsheetGID    string
+	SpreadsheetColumn string
 }
 
 // UploadDriveFile uploads a file into Drive given the file and the file ID.
@@ -36,6 +40,10 @@ func (s *Server) UploadDriveFile(payload FamilyPayload, resp *string) error {
 		f,
 		payload.FolderID)
 	if err != nil {
+		return err
+	}
+
+	if err := os.Remove(filePath); err != nil {
 		return err
 	}
 
