@@ -2,7 +2,9 @@ package rpc
 
 import (
 	"drive-service/internal/platform/driveaccount"
+	"github.com/otiai10/gosseract/v2"
 	"google.golang.org/api/drive/v3"
+	"google.golang.org/api/sheets/v4"
 	"log"
 	"net"
 	"net/rpc"
@@ -13,6 +15,8 @@ import (
 type Server struct {
 	ServiceAccount driveaccount.ServiceAccount
 	DriveService   *drive.Service
+	SheetService   *sheets.Service
+	OCRClient      *gosseract.Client
 }
 
 func (s *Server) Listen(port string) error {

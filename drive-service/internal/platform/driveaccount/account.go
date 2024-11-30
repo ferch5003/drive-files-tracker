@@ -4,13 +4,17 @@ import (
 	"context"
 	"drive-service/config"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/jwt"
 	"google.golang.org/api/drive/v3"
+	"google.golang.org/api/sheets/v4"
 	"io"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 )
 
 type ServiceAccount struct {
@@ -98,4 +102,96 @@ func (s ServiceAccount) RemoveFolder(
 	service *drive.Service,
 	folderID string) error {
 	return service.Files.Delete(folderID).Do()
+}
+
+func (s ServiceAccount) WriteOnSheet(
+	service *sheets.Service,
+	spreadsheetID,
+	spreadsheetGID,
+	spreadsheetColumn,
+	monthRow,
+	text string) error {
+	// Get spreadsheet metadata
+	spreadsheet, err := service.Spreadsheets.Get(spreadsheetID).Do()
+	if err != nil {
+		return err
+	}
+
+	// Loop through tabs to find the tab name by GID
+	var tabName string
+	for _, sheet := range spreadsheet.Sheets {
+		if fmt.Sprintf("%d", sheet.Properties.SheetId) == spreadsheetGID {
+			tabName = sheet.Properties.Title
+			break
+		}
+	}
+
+	if tabName == "" {
+		return err
+	}
+
+	cell := fmt.Sprintf("%s!%s", tabName, spreadsheetColumn+monthRow)
+	resp, err := service.Spreadsheets.Values.Get(spreadsheetID, cell).Do()
+	if err != nil {
+		return err
+	}
+
+	cellValue := fmt.Sprintf("%s", resp.Values[0][0])
+	if cellValue != "" {
+		pastValue, err := getMoneyFromTextOnFloat64(cellValue)
+		if err != nil {
+			return err
+		}
+
+		actualValue, err := strconv.ParseFloat(text, 64)
+		if err != nil {
+			return err
+		}
+
+		text = strings.ReplaceAll(
+			fmt.Sprintf("%f", pastValue+actualValue),
+			".",
+			",",
+		)
+	}
+
+	valueRange := &sheets.ValueRange{
+		Values: [][]interface{}{
+			{text}, // This writes the value to the specified cell
+		},
+	}
+
+	_, err = service.Spreadsheets.Values.Update(spreadsheetID, cell, valueRange).
+		ValueInputOption("USER_ENTERED").
+		Do()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getMoneyFromTextOnFloat64(text string) (float64, error) {
+	dollarIndex := strings.Index(text, "$") // Find the index of the dollar sign
+
+	if dollarIndex != -1 {
+		// Extract the substring starting from the character after the dollar sign
+		money := strings.ReplaceAll(
+			strings.ReplaceAll(
+				strings.ReplaceAll(text[dollarIndex+1:], " ", ""),
+				".", "",
+			),
+			",",
+			".",
+		)
+
+		value, err := strconv.ParseFloat(money, 64)
+		if err != nil {
+			return 0, err
+		}
+
+		return value, nil
+	}
+
+	return 0, errors.New("no Money found")
 }

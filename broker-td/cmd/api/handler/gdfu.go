@@ -114,7 +114,7 @@ func (h *GDriveFamilyHandler) Post(c *fiber.Ctx) error {
 	var result string
 	if err := h.RPCClient.Call("Server.UploadDriveFile", familyPayload, &result); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err,
+			"error": err.Error(),
 		})
 	}
 

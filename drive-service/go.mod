@@ -5,6 +5,7 @@ go 1.22.7
 toolchain go1.23.0
 
 require (
+	github.com/otiai10/gosseract/v2 v2.4.1
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/fx v1.23.0
 	go.uber.org/zap v1.27.0
