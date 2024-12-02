@@ -120,11 +120,15 @@ func getMoneyFromText(text string) (string, error) {
 }
 
 type BotUser struct {
-	BotID    int
-	UserID   int
-	Date     string
-	FolderID string
-	IsParent bool
+	BotID              int
+	UserID             int
+	Date               string
+	FolderID           string
+	IsParent           bool
+	SpreadsheetID      string
+	SpreadsheetGID     string
+	SpreadsheetBaseGID string
+	SpreadsheetColumn  string
 }
 
 type BotUsersPayload struct {
@@ -141,7 +145,10 @@ func (s *Server) CreateYearlyFolders(payload BotUsersPayload, resp *BotUsersPayl
 	}
 
 	newBotUsers := make([]BotUser, 0)
-	currentYear := time.Now().In(location).Format(_RFC3339OnlyYearFormat)
+	currentYear := time.Now().In(location).AddDate(1, 0, 0).Format(_RFC3339OnlyYearFormat) // TESTTT
+	//currentYear := time.Now().In(location).Format(_RFC3339OnlyYearFormat)
+
+	var botSheetsGID map[string]string
 	for _, botUser := range payload.BotUsers {
 		folder, err := s.ServiceAccount.CreateFolder(
 			s.DriveService,
@@ -149,19 +156,37 @@ func (s *Server) CreateYearlyFolders(payload BotUsersPayload, resp *BotUsersPayl
 			driveaccount.BaseApplicationVNDGoogleAppsFolder,
 			botUser.FolderID)
 		if err != nil {
-			removeFolderErr := s.removeFolders(newBotUsers)
-			if removeFolderErr != nil {
-				return removeFolderErr
-			}
+			log.Println(err)
+			return removeData(s, newBotUsers, err)
+		}
 
-			return err
+		// Write value of payment in Spreadsheet Process.
+		newSpreadsheetGID, ok := botSheetsGID[botUser.SpreadsheetID]
+		if !ok && !slices.Contains([]string{
+			botUser.SpreadsheetID,
+			botUser.SpreadsheetBaseGID,
+			botUser.SpreadsheetColumn,
+		}, "") {
+			newSpreadsheetGID, err = s.ServiceAccount.CopySheetToSameSpreadsheet(
+				s.SheetService,
+				botUser.SpreadsheetID,
+				botUser.SpreadsheetBaseGID,
+				currentYear,
+			)
+			if err != nil {
+				log.Println(err)
+				return removeData(s, newBotUsers, err)
+			}
 		}
 
 		newBotUser := BotUser{
-			BotID:    botUser.BotID,
-			UserID:   botUser.UserID,
-			Date:     currentYear,
-			FolderID: folder.Id,
+			BotID:             botUser.BotID,
+			UserID:            botUser.UserID,
+			Date:              currentYear,
+			FolderID:          folder.Id,
+			SpreadsheetID:     botUser.SpreadsheetID,
+			SpreadsheetGID:    newSpreadsheetGID,
+			SpreadsheetColumn: botUser.SpreadsheetColumn,
 		}
 
 		newBotUsers = append(newBotUsers, newBotUser)
@@ -170,6 +195,8 @@ func (s *Server) CreateYearlyFolders(payload BotUsersPayload, resp *BotUsersPayl
 	response := BotUsersPayload{
 		BotUsers: newBotUsers,
 	}
+
+	log.Printf("%+v", response)
 
 	*resp = response
 
@@ -184,4 +211,29 @@ func (s *Server) removeFolders(botUsers []BotUser) error {
 	}
 
 	return nil
+}
+
+func (s *Server) removeSheets(botUsers []BotUser) error {
+	for _, botUser := range botUsers {
+		if err := s.ServiceAccount.RemoveSheetOnSpreadsheet(
+			s.SheetService, botUser.SpreadsheetID, botUser.SpreadsheetGID); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func removeData(s *Server, botUsers []BotUser, originalErr error) error {
+	removeFolderErr := s.removeFolders(botUsers)
+	if removeFolderErr != nil {
+		return removeFolderErr
+	}
+
+	removeSheetErr := s.removeSheets(botUsers)
+	if removeSheetErr != nil {
+		return removeSheetErr
+	}
+
+	return originalErr
 }

@@ -171,6 +171,76 @@ func (s ServiceAccount) WriteOnSheet(
 	return nil
 }
 
+func (s ServiceAccount) CopySheetToSameSpreadsheet(
+	service *sheets.Service,
+	spreadsheetID,
+	spreadsheetBaseGID,
+	newSheetName string) (string, error) {
+	// Get the total number of sheets to place the duplicated sheet at the end.
+	spreadsheet, err := service.Spreadsheets.Get(spreadsheetID).Fields("sheets.properties.sheetId").Do()
+	if err != nil {
+		return "", err
+	}
+	lastIndex := len(spreadsheet.Sheets) // Number of sheets in the spreadsheet.
+
+	baseSheetGID, err := strconv.ParseInt(spreadsheetBaseGID, 10, 64)
+	if err != nil {
+		return "", err
+	}
+
+	// Set up the duplicate sheet request.
+	requests := []*sheets.Request{
+		{
+			DuplicateSheet: &sheets.DuplicateSheetRequest{
+				SourceSheetId:    baseSheetGID,     // GID of the base sheet.
+				InsertSheetIndex: int64(lastIndex), // Insert at the last position.
+				NewSheetName:     newSheetName,     // Name of the new sheet.
+			},
+		},
+	}
+
+	// Execute the batch update.
+	batchUpdateRequest := &sheets.BatchUpdateSpreadsheetRequest{
+		Requests: requests,
+	}
+
+	response, err := service.Spreadsheets.BatchUpdate(spreadsheetID, batchUpdateRequest).Do()
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%d", response.Replies[0].DuplicateSheet.Properties.SheetId), nil
+}
+
+func (s ServiceAccount) RemoveSheetOnSpreadsheet(
+	service *sheets.Service,
+	spreadsheetID,
+	spreadsheetGID string) error {
+	sheetGID, err := strconv.ParseInt(spreadsheetGID, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	// Create the DeleteSheetRequest.
+	deleteRequest := &sheets.Request{
+		DeleteSheet: &sheets.DeleteSheetRequest{
+			SheetId: sheetGID,
+		},
+	}
+
+	// Execute the batch update request.
+	batchUpdateRequest := &sheets.BatchUpdateSpreadsheetRequest{
+		Requests: []*sheets.Request{deleteRequest},
+	}
+
+	_, err = service.Spreadsheets.BatchUpdate(spreadsheetID, batchUpdateRequest).Do()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func getMoneyFromTextOnFloat64(text string) (float64, error) {
 	dollarIndex := strings.Index(text, "$") // Find the index of the dollar sign
 

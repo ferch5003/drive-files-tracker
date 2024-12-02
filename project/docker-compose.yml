@@ -84,6 +84,7 @@ services:
       - ./pgdata/000004_insert_default_bot_user_parent.up.sql:/docker-entrypoint-initdb.d/000004_insert_default_bot_user_parent.up.sql
       - ./pgdata/000005_alter_table_bot_user_spreadsheet_id_gid_column.up.sql:/docker-entrypoint-initdb.d/000005_alter_table_bot_user_spreadsheet_id_gid_column.up.sql
       - ./pgdata/000006_update_bot_user_with_spreadsheet_id.up.sql:/docker-entrypoint-initdb.d/000006_update_bot_user_with_spreadsheet_id.up.sql
+      - ./pgdata/000007_alter_table_bots_add_is_active.up.sql:/docker-entrypoint-initdb.d/000007_alter_table_bots_add_is_active.up.sql
     user: '${UID}:${GID}'
     healthcheck:
       test: pg_isready -U postgres -d users_tbs

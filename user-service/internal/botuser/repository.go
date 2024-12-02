@@ -9,11 +9,17 @@ import (
 
 // Queries.
 const (
-	_getAllParentsStmt = `SELECT bot_id, user_id, date, folder_id, is_parent
+	_getAllParentsStmt = `SELECT bot_user.bot_id, bot_user.user_id, bot_user.date, bot_user.folder_id, 
+       					  bot_user.is_parent, bot_user.spreadsheet_id, bot_user.spreadsheet_base_gid, 
+       					  bot_user.spreadsheet_column
 						  FROM bot_user
-						  WHERE is_parent = TRUE;`
+						  INNER JOIN bots
+						  ON bot_user.bot_id = bots.id
+						  WHERE bot_user.is_parent = TRUE
+						  AND bots.is_active = TRUE;`
 	_saveManyBotUserStmt = `INSERT INTO bot_user 
-    						(bot_id, user_id, date, folder_id, is_parent) 
+    						(bot_id, user_id, date, folder_id, is_parent, 
+    						spreadsheet_id, spreadsheet_gid, spreadsheet_column) 
 							VALUES %s;`
 )
 
@@ -51,9 +57,13 @@ func (r *repository) SaveMany(ctx context.Context, botUsers []domain.BotUser) er
 
 	var queryValues string
 	var params []any
+	columns := 8 // Number of columns to have in count for the _saveManyBotUserStmt
 	for i, botUser := range botUsers {
-		queryValues += fmt.Sprintf("($%d, $%d, $%d, $%d, $%d),", i*5+1, i*5+2, i*5+3, i*5+4, i*5+5)
-		params = append(params, botUser.BotID, botUser.UserID, botUser.Date, botUser.FolderID, botUser.IsParent)
+		queryValues += fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d),",
+			i*columns+1, i*columns+2, i*columns+3, i*columns+4, i*columns+5,
+			i*columns+6, i*columns+7, i*columns+8)
+		params = append(params, botUser.BotID, botUser.UserID, botUser.Date, botUser.FolderID, botUser.IsParent,
+			botUser.SpreadsheetID, botUser.SpreadsheetGID, botUser.SpreadsheetColumn)
 	}
 
 	queryValues = queryValues[:len(queryValues)-1]

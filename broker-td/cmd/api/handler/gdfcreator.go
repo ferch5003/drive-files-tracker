@@ -22,11 +22,15 @@ func NewGDriveFolderCreatorHandler(configs *config.EnvVars) (*GDriveFolderCreato
 }
 
 type botUser struct {
-	BotID    int    `json:"bot_id"`
-	UserID   int    `json:"user_id"`
-	Date     string `json:"date"`
-	FolderID string `json:"folder_id"`
-	IsParent bool   `json:"is_parent"`
+	BotID              int    `json:"bot_id"`
+	UserID             int    `json:"user_id"`
+	Date               string `json:"date"`
+	FolderID           string `json:"folder_id"`
+	IsParent           bool   `json:"is_parent"`
+	SpreadsheetID      string `json:"spreadsheet_id"`
+	SpreadsheetGID     string `json:"spreadsheet_gid"`
+	SpreadsheetBaseGID string `json:"spreadsheet_base_gid"`
+	SpreadsheetColumn  string `json:"spreadsheet_column"`
 }
 
 type BotUsersPayload struct {

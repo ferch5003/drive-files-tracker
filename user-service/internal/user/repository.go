@@ -13,10 +13,13 @@ const (
 	_findFolderIDStmt      = `SELECT DISTINCT folder_id
 							  FROM bot_user
 							  INNER JOIN bots
-							  ON bot_user.bot_id = $1
+							  ON bot_user.bot_id = bots.id
 							  INNER JOIN users
-							  ON bot_user.user_id = $2
-							  WHERE bot_user.date = $3;`
+							  ON bot_user.user_id = users.id
+							  WHERE bot_user.bot_id = $1
+						   	  AND bot_user.user_id = $2
+						   	  AND bot_user.date = $3
+							  AND bots.is_active = TRUE;`
 	_getSpreadsheetDataStmt = `SELECT 
     						   bot_user.spreadsheet_id, bot_user.spreadsheet_gid, bot_user.spreadsheet_column
 							   FROM bot_user
