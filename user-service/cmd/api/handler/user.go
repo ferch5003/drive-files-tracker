@@ -2,7 +2,6 @@ package handler
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"log"
 	"user-service/internal/user"
 )
 
@@ -50,7 +49,6 @@ func (h *UserHandler) GetSpreadsheetData(c *fiber.Ctx) error {
 	date := c.Params("date")
 
 	id, gid, column, err := h.userService.GetSpreadsheetData(c.Context(), userUsername, botName, date)
-	log.Println("IDS", id, gid)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),

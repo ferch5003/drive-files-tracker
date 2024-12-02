@@ -45,7 +45,7 @@ func (s ServiceAccount) Get() (*http.Client, error) {
 	}
 
 	credentials.Email = s.configs.SAClientEmail
-	credentials.PrivateKey = s.configs.SAPrivateKey
+	credentials.PrivateKey = strings.ReplaceAll(s.configs.SAPrivateKey, `\n`, "\n")
 
 	jwtConfigs := &jwt.Config{
 		Email:      credentials.Email,
