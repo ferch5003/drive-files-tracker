@@ -145,10 +145,9 @@ func (s *Server) CreateYearlyFolders(payload BotUsersPayload, resp *BotUsersPayl
 	}
 
 	newBotUsers := make([]BotUser, 0)
-	currentYear := time.Now().In(location).AddDate(1, 0, 0).Format(_RFC3339OnlyYearFormat) // TESTTT
-	//currentYear := time.Now().In(location).Format(_RFC3339OnlyYearFormat)
+	currentYear := time.Now().In(location).Format(_RFC3339OnlyYearFormat)
 
-	var botSheetsGID map[string]string
+	botSheetsGID := make(map[string]string)
 	for _, botUser := range payload.BotUsers {
 		folder, err := s.ServiceAccount.CreateFolder(
 			s.DriveService,
@@ -177,6 +176,9 @@ func (s *Server) CreateYearlyFolders(payload BotUsersPayload, resp *BotUsersPayl
 				log.Println(err)
 				return removeData(s, newBotUsers, err)
 			}
+
+			// Save saved sheet to not duplicate previous one.
+			botSheetsGID[botUser.SpreadsheetID] = newSpreadsheetGID
 		}
 
 		newBotUser := BotUser{
@@ -195,8 +197,6 @@ func (s *Server) CreateYearlyFolders(payload BotUsersPayload, resp *BotUsersPayl
 	response := BotUsersPayload{
 		BotUsers: newBotUsers,
 	}
-
-	log.Printf("%+v", response)
 
 	*resp = response
 
