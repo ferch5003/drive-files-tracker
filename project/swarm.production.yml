@@ -1,27 +1,6 @@
-version: '3'
-
-volumes:
-  caddy_data:
-    external: true
-  caddy_config:
+version: '3.7'
 
 services:
-  caddy:
-    image: ferch5003/tfd-micro-caddy-production:1.0.1
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints:
-          - node.hostname == drive-files-tracker
-    ports:
-      - "80:80"
-      - "443:443"
-    restart: unless-stopped
-    volumes:
-      - caddy_data:/data
-      - caddy_config:/config
-
   broker-td:
     image: ferch5003/broker-td:1.0.3
     deploy:
@@ -32,6 +11,8 @@ services:
     restart: unless-stopped
     env_file:
       - ./broker-td/.env
+    networks:
+      - caddy_server_default
 
   telegram-bot-service:
     image: ferch5003/telegram-bot-service:1.0.5
@@ -44,6 +25,8 @@ services:
     depends_on:
       - user-service
       - broker-td
+    networks:
+      - caddy_server_default
 
   user-service:
     image: ferch5003/user-service:1.0.3
@@ -55,6 +38,8 @@ services:
     restart: unless-stopped
     env_file:
       - ./user-service/.env
+    networks:
+      - caddy_server_default
 
   drive-service:
     image: ferch5003/drive-service:1.0.3
@@ -66,3 +51,9 @@ services:
     restart: unless-stopped
     env_file:
       - ./drive-service/.env
+    networks:
+      - caddy_server_default
+
+networks:
+  caddy_server_default:
+    external: true
