@@ -42,7 +42,7 @@ func (h *GDriveFamilyHandler) Post(c *fiber.Ctx) error {
 	photo, err := c.FormFile("tg-bot-file")
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err,
+			"error": err.Error(),
 		})
 	}
 
@@ -54,20 +54,25 @@ func (h *GDriveFamilyHandler) Post(c *fiber.Ctx) error {
 	reader, err := photo.Open()
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err,
+			"error": err.Error(),
 		})
 	}
 
 	photoBytes, err := io.ReadAll(reader)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err,
+			"error": err.Error(),
 		})
 	}
 
 	folderIDURL := fmt.Sprintf(
 		"%s/users/%s/bot/%s?date=%s", h.userServiceBaseURL, username, botName, date)
 	folderIDBody, err := makeClientRequest(fiber.MethodGet, folderIDURL, h.Client)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
 
 	var folderData struct {
 		FolderID string `json:"folder_id"`
@@ -75,19 +80,24 @@ func (h *GDriveFamilyHandler) Post(c *fiber.Ctx) error {
 	err = json.Unmarshal(folderIDBody, &folderData)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err,
+			"error": err.Error(),
 		})
 	}
 
 	if folderData.FolderID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err,
+			"error": "folder id is empty",
 		})
 	}
 
 	spreadsheetsURL := fmt.Sprintf(
 		"%s/users/%s/bot/%s/date/%s/spreadsheets", h.userServiceBaseURL, username, botName, date)
 	spreadsheetsBody, err := makeClientRequest(fiber.MethodGet, spreadsheetsURL, h.Client)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
 
 	var spreadSheetData struct {
 		SpreadsheetID     string `json:"spreadsheet_id"`
@@ -97,7 +107,7 @@ func (h *GDriveFamilyHandler) Post(c *fiber.Ctx) error {
 	err = json.Unmarshal(spreadsheetsBody, &spreadSheetData)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err,
+			"error": err.Error(),
 		})
 	}
 

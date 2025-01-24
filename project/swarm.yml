@@ -5,7 +5,7 @@ volumes:
 
 services:
   broker-td:
-    image: ferch5003/broker-td:1.0.3
+    image: ferch5003/broker-td:1.0.4
     deploy:
       mode: replicated
       replicas: 1
@@ -32,7 +32,7 @@ services:
       - caddy_network
 
   user-service:
-    image: ferch5003/user-service:1.0.3
+    image: ferch5003/user-service:1.0.4
     ports:
       - "3001:80"
     deploy:
@@ -45,7 +45,7 @@ services:
       - caddy_network
 
   drive-service:
-    image: ferch5003/drive-service:1.0.3
+    image: ferch5003/drive-service:1.0.4
     ports:
       - "5001:5001"
     deploy:

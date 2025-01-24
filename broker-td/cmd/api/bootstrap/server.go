@@ -31,7 +31,7 @@ func Start(
 	lc fx.Lifecycle,
 	cfg *config.EnvVars,
 	app *fiber.App,
-	router *router.GeneralRouter,
+	routes *router.GeneralRouter,
 	logger *zap.Logger) {
 	port := _defaultPort // Default Port
 	if cfg != nil && cfg.Port != "" {
@@ -55,15 +55,15 @@ func Start(
 		OnStart: func(ctx context.Context) error {
 			logger.Info(fmt.Sprintf("Starting fiber server on 0.0.0.0:%s", port))
 
-			router.Register()
-
-			go func() {
+			go func(appRoutes *router.GeneralRouter) {
 				logger.Info("Starting...")
+
+				appRoutes.Register()
 
 				if err := app.Listen(":" + port); err != nil {
 					logger.Error(err.Error())
 				}
-			}()
+			}(routes)
 
 			return nil
 		},

@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   broker-td:
-    image: ferch5003/broker-td:1.0.3
+    image: ferch5003/broker-td:1.0.4
     deploy:
       mode: replicated
       replicas: 1
@@ -29,7 +29,7 @@ services:
       - caddy_server_default
 
   user-service:
-    image: ferch5003/user-service:1.0.3
+    image: ferch5003/user-service:1.0.4
     ports:
       - "3001:80"
     deploy:
@@ -42,7 +42,7 @@ services:
       - caddy_server_default
 
   drive-service:
-    image: ferch5003/drive-service:1.0.3
+    image: ferch5003/drive-service:1.0.4
     ports:
       - "5001:5001"
     deploy:

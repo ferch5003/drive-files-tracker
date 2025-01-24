@@ -30,11 +30,13 @@ func (s *Server) UploadDriveFile(payload FamilyPayload, resp *string) error {
 	// Uploading file to Drive Process.
 	filePath, err := files.CreateFile("tmp", payload.Filename, payload.Photo)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 
 	f, err := os.Open(filePath)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 
@@ -45,10 +47,12 @@ func (s *Server) UploadDriveFile(payload FamilyPayload, resp *string) error {
 		f,
 		payload.FolderID)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 
 	if err := os.Remove(filePath); err != nil {
+		log.Println(err)
 		return err
 	}
 
@@ -62,20 +66,24 @@ func (s *Server) UploadDriveFile(payload FamilyPayload, resp *string) error {
 	}, "") {
 		location, err := time.LoadLocation("America/Bogota")
 		if err != nil {
+			log.Println(err)
 			return err
 		}
 
 		if err := s.OCRClient.SetImageFromBytes(payload.Photo); err != nil {
+			log.Println(err)
 			return err
 		}
 
 		text, err := s.OCRClient.Text()
 		if err != nil {
+			log.Println(err)
 			return fmt.Errorf("text: %v", err)
 		}
 
 		actualMoney, err := getMoneyFromText(text)
 		if err != nil {
+			log.Println(err)
 			return fmt.Errorf("getMoneyFromText: %v", err)
 		}
 
@@ -87,6 +95,7 @@ func (s *Server) UploadDriveFile(payload FamilyPayload, resp *string) error {
 			payload.SpreadsheetColumn,
 			fmt.Sprintf("%d", 2+int(currentMonth)), // Default space to row is 2, so it begin on 3 cells.
 			actualMoney); err != nil {
+			log.Println(err)
 			return fmt.Errorf("WriteOnSheet: %v", err)
 		}
 	}
@@ -98,10 +107,13 @@ func getMoneyFromText(text string) (string, error) {
 	dollarIndex := strings.Index(text, "$") // Find the index of the dollar sign
 
 	if dollarIndex != -1 {
+		fromMoneySign := text[dollarIndex+1:]
+		textsFromMoneySign := strings.Split(fromMoneySign, "\n")
+
 		// Extract the substring starting from the character after the dollar sign
 		money := strings.ReplaceAll(
 			strings.ReplaceAll(
-				strings.ReplaceAll(text[dollarIndex+1:], " ", ""),
+				strings.ReplaceAll(textsFromMoneySign[0], " ", ""),
 				".", "",
 			),
 			",",
